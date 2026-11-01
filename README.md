@@ -104,6 +104,6 @@ Locally, keep an app server running before `npm run test:e2e`. Playwright also s
 
 ## Contributing and review
 
-Open a pull request against `main`; do not push changes directly to it. All files are owned by **@kunalkohli** in `.github/CODEOWNERS`. Required code-owner review depends on GitHub branch protection **and the CODEOWNERS file being present on the base branch**. See [.github/REVIEW_POLICY.md](.github/REVIEW_POLICY.md) for enforcement and the initial-PR limitation.
+Open a pull request against `main`; do not push changes directly to it. All files are owned by **@kunalkohli** in `.github/CODEOWNERS`. Contributor PRs require approval; the owner can merge their own PRs using GitHub's admin bypass without self-review. This owner bypass is broader than an author-specific exception. Required code-owner review depends on GitHub branch protection **and the CODEOWNERS file being present on the base branch**. See [.github/REVIEW_POLICY.md](.github/REVIEW_POLICY.md) for enforcement and the initial-PR limitation.
 
 The existing repository MIT license is preserved.
