@@ -42,8 +42,8 @@ export function LayoutSwitch() {
   </div>;
 }
 
-export function JourneyLinks({ active }: { active: "forecasting" | "experimentation" }) {
-  return <nav className="journey-links" aria-label="Journeys"><Link className="workspace-brand" href="/" aria-label="StatsConcepts home"><span className="logo-mark" aria-hidden="true">SC</span><span className="workspace-name">StatsConcepts</span></Link><Link href="/">Home</Link><Link href="/forecasting" aria-current={active === "forecasting" ? "page" : undefined}>Forecasting</Link><Link href="/experimentation" aria-current={active === "experimentation" ? "page" : undefined}>Experimentation</Link></nav>;
+export function JourneyLinks({ active }: { active: "forecasting" | "experimentation" | "sql" }) {
+  return <nav className="journey-links" aria-label="Journeys"><Link className="workspace-brand" href="/" aria-label="DSConcepts home"><span className="logo-mark" aria-hidden="true">DS</span><span className="workspace-name">DSConcepts</span></Link><Link href="/">Home</Link><Link href="/forecasting" aria-current={active === "forecasting" ? "page" : undefined}>Forecasting</Link><Link href="/experimentation" aria-current={active === "experimentation" ? "page" : undefined}>Experimentation</Link><Link href="/sql-practice" aria-current={active === "sql" ? "page" : undefined}>SQL Practice</Link></nav>;
 }
 
 export function TextSizeControls() {

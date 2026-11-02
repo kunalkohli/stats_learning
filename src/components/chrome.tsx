@@ -4,7 +4,7 @@ import Link from "next/link";
 import { DisplayControls } from "./layout-preference";
 
 export function Logo() {
-  return <Link className="logo" href="/" aria-label="StatsConcepts home"><span className="logo-mark" aria-hidden="true">SC</span>StatsConcepts</Link>;
+  return <Link className="logo" href="/" aria-label="DSConcepts home"><span className="logo-mark" aria-hidden="true">DS</span>DSConcepts</Link>;
 }
 
 export function Header() {
@@ -13,7 +13,7 @@ export function Header() {
     <nav aria-label="Main navigation">
       <Link href="/">Home</Link>
       <Link href="/#journeys">Concepts</Link>
-      <Link href="/experimentation">Experimentation</Link>
+      <Link href="/sql-practice">SQL Practice</Link>
     </nav>
     <Link className="journal-link" href="/journal">Learning journal</Link>
     <DisplayControls />

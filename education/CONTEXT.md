@@ -1,4 +1,4 @@
-# StatsConcepts — agent onboarding context
+# DSConcepts — agent onboarding context
 
 Last updated: **2026-11-01**.
 
@@ -16,7 +16,25 @@ Read the project's `AGENTS.md` before editing. Next.js generates an instruction 
 
 ## 2. What we are building
 
-**StatsConcepts** is a local-first educational web app for learning statistical concepts through connected journeys. Forecasting (31 stops) and experimentation (24 stops) are implemented. Regression and probability/distributions remain **planned**.
+**DSConcepts** (formerly StatsConcepts) is a local-first educational app for learning data-science concepts and practicing interview skills. Forecasting (31 stops), experimentation (24 stops), and SQL Practice (24 problems) are implemented. Regression and probability/distributions remain **planned**.
+
+### Latest: DSConcepts branding and SQL interview practice
+
+- The user chose the name **DSConcepts** and requested a **new PR for SQL practice**. PR #1 was verified merged; this work starts from the updated `origin/main` on `feat/dsconcepts-sql-practice`. Leave the new PR open; do not merge automatically or change repository permissions.
+- Branding, page metadata, favicon, navigation, and exported journal headings use DSConcepts. **Do not rename old `statsconcepts-*` storage keys or the established forecasting/experimentation export filenames.** Existing URLs and note migrations are unchanged. The GitHub repository remains `kunalkohli/stats_learning`.
+- Routes: `/sql-practice` plus 24 static `/sql-practice/[slug]` pages. Home and shared navigation link to it. Both layouts and persistent A−/90%/A+ controls work here too. Responsive chrome accounts for the additional navigation link.
+- Northstar Commerce is the fictional ecommerce/finance case. Six tables: customers (60), products (6), orders (251), order_items, payments, refunds. All amounts are USD cents, timestamps UTC, and order dates span January–June 2026. Fixtures deliberately include missing emails, zero-order buyers, multiple order lines/quantities, tied timestamps, failed payment attempts, pending refunds, and several refunds against a payment.
+- `src/lib/sql/data.ts` generates two deterministic, consistent fixtures. The alternate varies amounts, including making buyer 60's first March order cross the $100 threshold. The visible first-ever March >$100 cohort is customers 2, 40, 56, 57; the variation also includes 60. Do not hardcode these answers into user-facing starter queries.
+- `src/lib/sql/questions.ts` defines 12 Basic and 12 Advanced problems with prompts, required columns/order, starter SQL, progressive hints, reference solutions, and explanations. Includes ROW_NUMBER first-ever cohorts, RANK/DENSE_RANK ties, LEAD/LAG, running sums, calendar scaffolding, and refund-safe preaggregation.
+- **Engine:** pinned `@duckdb/duckdb-wasm` in a dedicated browser worker. `npm run dev` and `npm run build` run `scripts/prepare-sql-assets.mjs` first; assets are copied from node_modules into ignored `public/sql-engine/`. No CDN dependency, server SQL endpoint, account, or AI integration. MIT notice is in `public/licenses/duckdb-wasm.txt`. Keep generated WASM/worker files out of Git; they are relatively large.
+- `src/lib/sql/runner.ts` lazily loads the engine, disables external access/extension auto-install/loading, locks configuration, sets a 128 MB query memory limit, and recreates fixtures for each execution. User SQL is guarded as one SELECT/WITH and embedded in outer SELECT context. No file/network access or writes are intended. This is a local teaching sandbox, not a general production arbitrary-code boundary.
+- Limits: 30 seconds for engine startup, then 5 seconds for query/check work, 500 output rows, 20,000 query characters. Timeout and Cancel terminate the worker; recovery is tested. Query errors also discard the worker. Edits while running cancel the stale execution so feedback cannot certify a different draft.
+- `src/lib/sql/checker.ts` compares named columns case-insensitively, allows column reordering, preserves row duplicates and typed NULL/value distinctions, and checks row order only when specified. Numeric fractional values normalize to eight decimals; supplied financial amounts fit safe JS integer cents. Check answer must pass the visible and variation fixtures. This is not proof of universal SQL correctness.
+- `src/components/sql/` contains CodeMirror SQL editing (plain textarea fallback), results pagination, schema/sample preview/download, scratchpad, hints/solutions, and the main shell. Highlighting uses PostgreSQL grammar only; **actual execution is DuckDB SQL** (`strftime`, `date_diff`, etc.).
+- SQL drafts, scratchpads, solved slugs, and resume slug use separate key **`dsconcepts-sql-progress-v1`**. Run and Expected output never mark solved; only successful checks on both fixtures do. Solved badges mean previously solved, not that the current edited draft is correct. Expected output does not appear as an actual query result.
+- `tests/sql.test.ts` covers data consistency, cohort traps, comparator semantics, statement guard, and storage validation. `tests/e2e/sql.spec.ts` runs all 24 reference solutions in real browser DuckDB on both fixtures, checks wrong cohorts/hardcoded answers, alternate valid SQL, errors/network/write restrictions, timeout/cancel/recovery, row cap, storage, schemas, and responsive layouts.
+- CI remains deferred per the prior explicit user decision. Do not add or push the local ignored workflow or request broader GitHub scopes for this feature. Local tests are not GitHub CI runs.
+- SQL/rebrand verification: **20 unit tests, 28 browser tests against development, 28 against a fresh production server, typecheck, production build (87 generated pages), and production-dependency audit (0 vulnerabilities) passed**. Browser tests execute all 24 reference solutions on both fixtures using real DuckDB workers. Desktop/mobile SQL pages were visually inspected. These are local validations, not hosted CI.
 
 ### October 31 expansion: two layouts and experimentation
 
@@ -66,7 +84,7 @@ Black Friday is recurring but **not a fixed date or guaranteed 364-day lag**. Mo
 
 ### Branding and visual design
 
-- The original implementation was called **Fieldnotes**. The user renamed it **StatsConcepts**.
+- The original implementation was called **Fieldnotes**, then **StatsConcepts**. The user has now chosen **DSConcepts**. Preserve legacy progress keys when changing visible branding.
 - Do not restore the earlier serif/editorial design. The user explicitly wanted the layout from their screenshots and the coloring from:
   `/Users/kunalkohli/Documents/kunal_ai_setup/profile.html`.
 - Image references: `/Users/kunalkohli/Downloads/IMG_0496.jpg` through `IMG_0508.jpg` inclusive.

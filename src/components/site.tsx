@@ -44,7 +44,7 @@ function Sidebar({ active, progress, onClose }: { active: number | "map"; progre
     <div className="sidebar-bottom">
       <div className="sidebar-legend"><span><Circle size={12} />To explore</span><span><CheckCircle2 size={12} />Understood</span></div>
       <Link href="/journal"><PenLine size={14} />Learning journal</Link>
-      <Link href="/">StatsConcepts home <ArrowUpRight size={13} /></Link>
+      <Link href="/">DSConcepts home <ArrowUpRight size={13} /></Link>
     </div>
   </>;
 }
@@ -123,7 +123,7 @@ export function Forecasting({ lesson }: { lesson?: Lesson }) {
           {quiz}{notebook}{reading}{nextLink}
         </div>}
       </article>}
-      <footer className="learning-footer"><span>StatsConcepts · one concept at a time.</span><a href="/journal">Learning journal ↗</a></footer>
+      <footer className="learning-footer"><span>DSConcepts · one concept at a time.</span><a href="/journal">Learning journal ↗</a></footer>
     </main>
   </div>;
 }
@@ -159,7 +159,7 @@ export function Journal() {
   const noted = lessons.filter(l => progress.notes[l.id]?.trim());
   const visible = filter === "notes" ? noted : lessons.filter(l => progress.understood.includes(l.id) || progress.notes[l.id]?.trim());
   function exportNotes() {
-    const content = `# StatsConcepts — My Forecasting Journal\n\n${progress.understood.length}/${lessons.length} stops understood\n\n` + lessons.filter(l => progress.understood.includes(l.id) || progress.notes[l.id]?.trim()).map(l => `## ${l.id}. ${l.title}\n\n${progress.understood.includes(l.id) ? "Understood ✓\n\n" : ""}${progress.notes[l.id] || "No note yet."}\n`).join("\n");
+    const content = `# DSConcepts — My Forecasting Journal\n\n${progress.understood.length}/${lessons.length} stops understood\n\n` + lessons.filter(l => progress.understood.includes(l.id) || progress.notes[l.id]?.trim()).map(l => `## ${l.id}. ${l.title}\n\n${progress.understood.includes(l.id) ? "Understood ✓\n\n" : ""}${progress.notes[l.id] || "No note yet."}\n`).join("\n");
     const url = URL.createObjectURL(new Blob([content], { type: "text/markdown;charset=utf-8" }));
     const a = document.createElement("a"); a.href = url; a.download = "statsconcepts-forecasting-journal.md"; a.click(); URL.revokeObjectURL(url);
   }
