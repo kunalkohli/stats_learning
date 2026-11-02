@@ -18,16 +18,42 @@ test("all 24 reference solutions execute in real DuckDB and pass both fixtures",
   await page.goto("/");
   await expect(page.getByRole("link", { name: "DSConcepts home" }).first()).toBeVisible();
   await page.locator(".sql-journey-card").click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Practice SQL questions.");
   await expect(page.locator(".sql-problem-card")).toHaveCount(24);
   for (const q of sqlQuestions) {
     await page.goto(`/sql-practice/${q.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(q.title);
+    await expect(page.locator(".cm-content")).toHaveText("");
     await check(page, q.solution);
     await expect(page.locator(".sql-feedback.correct")).toContainText("visible dataset and an amount-variation fixture");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   await expect(page.locator(".sidebar-progress")).toContainText("24 / 24 solved");
   expect(errors).toEqual([]);
+});
+
+test("new problems start blank, saved drafts survive, and clearing requires consent without erasing notes", async ({ page }) => {
+  await page.goto("/sql-practice/march-first-order-over-100");
+  await expect(page.locator(".cm-content")).toHaveText("");
+  await expect(page.locator(".sql-solution pre")).toBeHidden();
+  await write(page, "SELECT * FROM orders");
+  const notes = page.getByLabel("Scratchpad for First-ever order in March, over $100");
+  await notes.fill("Rank all history before filtering March.");
+  await page.reload();
+  await expect(page.locator(".cm-content")).toHaveText("SELECT * FROM orders");
+  page.once("dialog", dialog => dialog.dismiss());
+  await page.getByRole("button", { name: "Clear query", exact: true }).click();
+  await expect(page.locator(".cm-content")).toHaveText("SELECT * FROM orders");
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button", { name: "Clear query", exact: true }).click();
+  await expect(page.locator(".cm-content")).toHaveText("");
+  await expect(notes).toHaveValue("Rank all history before filtering March.");
+  await page.reload();
+  await expect(page.locator(".cm-content")).toHaveText("");
+  await page.locator(".sql-solution summary").click();
+  page.once("dialog", dialog => dialog.accept());
+  await page.getByRole("button", { name: "Load solution into editor", exact: true }).click();
+  await expect(page.locator(".cm-content")).toContainText("ROW_NUMBER()");
 });
 
 test("different correct SQL passes; wrong answers, NULL mistakes, aliases, and ordering fail usefully", async ({ page }) => {

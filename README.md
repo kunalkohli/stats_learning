@@ -75,6 +75,7 @@ Inspect column types, relationships, and sample rows in the workspace, or downlo
 ### Editor and checking
 
 - CodeMirror provides syntax highlighting, line numbers, schema-aware completion, and **Cmd/Ctrl+Enter** to run. A plain-text editor remains available if enhancement fails.
+- New problems start with a **blank editor**, so you write the query yourself. Returning to a problem restores only your own saved draft. **Clear query** asks before removing a nonempty draft, leaves your scratchpad untouched, and stays blank after reload. Hints and solution loading are opt-in; SQL is never filled automatically.
 - **Run query** executes your SQL; it never marks a problem solved. **Expected output** lets you inspect the target without awarding progress.
 - **Check answer** compares named columns and typed result values with the reference, not SQL text. Column order and alias case may differ. Row order is ignored unless the question requires sorting. NULL differs from the text `NULL`, and duplicate row counts matter. Fractional numbers are normalized to eight decimal places; monetary answers stay in cents.
 - A correct visible result is also checked against a deterministic amount-variation fixture. This catches some hardcoded outputs and threshold errors, but passing two fixtures is **not proof of correctness on every possible dataset**.

@@ -13,7 +13,7 @@ test("SQL curriculum has 12 basic and 12 advanced complete interview problems", 
   assert.equal(new Set(sqlQuestions.map(q => q.slug)).size, 24);
   const tables = new Set(createFixture().map(t => t.name));
   for (const [i, q] of sqlQuestions.entries()) {
-    assert.equal(q.id, i + 1); assert.ok(q.prompt && q.starter && q.solution && q.explanation);
+    assert.equal(q.id, i + 1); assert.ok(q.prompt && q.solution && q.explanation);
     assert.equal(q.hints.length, 2); assert.ok(q.columns.length > 0);
     assert.ok(q.tables.every(t => tables.has(t)));
     assert.doesNotThrow(() => readOnlyQuery(q.solution));
