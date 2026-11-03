@@ -12,6 +12,8 @@ import { JourneyLinks, DisplayControls, useLayoutPreference } from "./layout-pre
 import { experimentGuide } from "@/lib/journey-guides";
 import { JourneyParts } from "./journey-parts";
 import { ResetLabButton } from "./labs";
+import { getLessonTeaching } from "@/lib/lesson-teaching";
+import { LessonConceptTables } from "./lesson-teaching";
 
 const KEY = "statsconcepts-experimentation-progress-v1";
 export function useExperimentProgress() {
@@ -35,6 +37,7 @@ export function useExperimentProgress() {
 }
 
 export function Experimentation({ lesson }: { lesson?: ExperimentLesson }) {
+  const teaching = lesson ? getLessonTeaching("experimentation", lesson) : undefined;
   const { progress, ready, storageError, update } = useExperimentProgress();
   const { layout } = useLayoutPreference();
   const [sidebarOpen, setSidebarOpen] = useState(false), [desktopHidden, setDesktopHidden] = useState(false), [isMobile, setIsMobile] = useState(false);
@@ -68,7 +71,7 @@ export function Experimentation({ lesson }: { lesson?: ExperimentLesson }) {
     <main className="learning-main">{storageError && <p className="storage-warning" role="status">Browser storage is unavailable. Your work may not persist after you leave this page.</p>}
       {!lesson ? <div className="route-page"><section className="forecast-intro experiment-intro"><span className="eyebrow">NORTHSTAR LAB · JOURNEY 02</span><h1>Experimentation,<br /><span className="reference-underline">from change to evidence.</span></h1><div className="reference-intro-layout"><div className="reference-panel intro-panel"><h2>A faster store. But is it a better store?</h2><p>Northstar is a fictional Amazon-like marketplace. Its engineering team wants to ship a new product-page cache. Will it make shopping faster, help buyers complete purchases, and keep checkout reliable?</p><p>Follow one A/B test from a causal question to a rollout decision. The running example uses sticky buyer assignment, seven-day purchase conversion, latency diagnostics, and reliability guardrails. All numbers are constructed for learning—not Amazon results.</p><p className="journey-summary">{lessons.length} stops · {progress.understood.length} marked as understood · no prerequisites</p><Link className="button primary" href={experimentUrl(lessons[progress.lastLesson - 1])}>{progress.understood.length || progress.lastLesson > 1 ? "Continue experimentation" : "Start with why randomize"}<ArrowRight size={16} /></Link></div><div className="experiment-hero-art" aria-hidden="true"><span>ONE STORE. TWO EXPERIENCES.</span><div className="hero-split"><div>A<br /><small>Existing stack</small></div><i>↔</i><div>B<br /><small>New cache</small></div></div><p>Same kinds of buyers.<br />One deliberate difference.</p></div></div></section><JourneyParts parts={parts} lessons={lessons} base="experimentation" understood={progress.understood} /><div className="source-note"><p>Start with a fair comparison. Measure buyer benefit and operational safety separately. End with an honest decision—not a search for a green p-value.</p></div></div> : <article className="reference-lesson" style={{ "--part-color": parts[lesson.part].color } as React.CSSProperties}>
         {layout !== "lab" && title}
-        {layout === "lab" ? <FocusLesson title={title} idea={lesson} guide={experimentGuide(lesson.lab)} lab={lab} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={reset} /> : <div className="lesson-content-panel"><p className="lesson-intro">{lesson.intro}</p><div className="idea-points">{lesson.points.map(p => <div className="idea-point" key={p.title}><div><h3>{p.title}</h3><p>{p.text}</p></div></div>)}</div>{lesson.formula && <div className="formula">{lesson.formula}</div>}<div className="lab-toolbar">{reset}</div>{lab}<aside className="takeaway"><span className="micro">TAKEAWAY</span><p>{lesson.takeaway}</p></aside>{quiz}{notebook}{reading}{nextLink}</div>}
+        {layout === "lab" ? <FocusLesson title={title} idea={lesson} teaching={teaching} guide={experimentGuide(lesson.lab)} lab={lab} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={reset} /> : <div className="lesson-content-panel"><p className="lesson-intro">{lesson.intro}</p><LessonConceptTables teaching={teaching!} />{lesson.formula && <div className="formula">{lesson.formula}</div>}<div className="lab-toolbar">{reset}</div>{lab}<aside className="takeaway"><span className="micro">TAKEAWAY</span><p>{lesson.takeaway}</p></aside>{quiz}{notebook}{reading}{nextLink}</div>}
       </article>}
       <footer className="learning-footer"><span>DSConcepts · one concept at a time.</span><Link href="/journal">Learning journal ↗</Link></footer>
     </main>

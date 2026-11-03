@@ -1,6 +1,6 @@
 # DSConcepts — agent onboarding context
 
-Last updated: **2026-11-01**.
+Last updated: **2026-11-02**.
 
 This is the local handoff document for the education/learning project. Read it before continuing development, then inspect the current source rather than treating this document as a replacement for it.
 
@@ -17,6 +17,28 @@ Read the project's `AGENTS.md` before editing. Next.js generates an instruction 
 ## 2. What we are building
 
 **DSConcepts** (formerly StatsConcepts) is a local-first educational app for learning data-science concepts and practicing interview skills. Forecasting (31 stops), experimentation (24 stops), and SQL Practice (24 problems) are implemented. Regression and probability/distributions remain **planned**.
+
+### Latest follow-up in PR #3: emoji tables and Northstar use cases
+
+- The user explicitly requested these additions be pushed to **the existing PR #3**, on `feat/grouped-learning-cards`; do not create a separate PR for them or merge/deploy automatically.
+- Replace the main explanatory lesson bullets in **Classic** with semantic tables: concept/component, definition, and a concrete Northstar example, using an emoji per row. This covers all 31 forecasting and 24 experimentation lessons. The forecasting overview's explanatory list is also a table. Navigation, quizzes, and the interactive workflow/mission steps are not converted to tables.
+- `src/lib/lesson-teaching.ts` stores authored example/emoji metadata keyed by journey and stable slug, checked against point counts. Missing metadata is an error, not a generic invented fallback. Most definition cells retain the exact existing point text. Examples are hypothetical teaching scenarios, not measured model/business results.
+- The components lesson gets a four-row **Trend / Seasonality / Cycle / Remainder** table plus a separate Additive/Multiplicative table. Cycles are non-calendar; remainder is not automatically white noise. Keep the actual-calendar/event-window caveat for Black Friday and the correct amount-versus-percentage arithmetic.
+- The first forecast lesson now starts with Northstar's actual planning question (next Tuesday's revenue and capacity preparation), followed by a structured six-row use case: business, question, one-number estimate, prediction interval, assumptions, and planning action. $32,000 is explicitly illustrative. Intervals concern future outcomes; staffing/stock decisions also need order counts, units, mix, and costs—not revenue alone.
+- Shared rendering is in `src/components/lesson-teaching.tsx`; styling is in `src/app/lesson-teaching.css`. On phones, table rows stack with explicit field labels and retained ARIA table semantics. Tables use rem-based text sizing.
+- Lab retains the grouped reading pages and adds the same emoji/example metadata to its point blocks. The first-lesson use case spans the setup row, avoiding a huge narrow column. Its original paragraphs/formula/takeaway stay in sequence. Classic's earlier “unchanged” claim applied to grouping only and is superseded by this explicit table request.
+- Interactive browser tests now wait for the existing enabled understood control before changing the initial sliders, ensuring the client has hydrated. No model formulas or slider behavior were changed. Run development tests separately from `next build` to avoid dev refresh/build artifact interference.
+- Final verification for this follow-up: **26 unit tests, the full 36-test browser suite against a fresh production server, typecheck, and production build (87 pages) passed**. Both example screenshots' lessons, all 55 lesson routes/tables, use-case rendering in both layouts, 140% mobile text, quizzes, controls, SQL regression checks, and saved progress were covered. Desktop tables and the Lab use case were visually inspected. These are local results, not a hosted CI run or a deployment.
+
+### Latest: fuller Lab Learn panels
+
+- The user found the one-paragraph cards too sparse and explicitly requested a **new PR** combining 2–3 cards into one. Work is on `feat/grouped-learning-cards`, branched from updated `origin/main` after PR #2 was merged. Do not merge or deploy automatically.
+- `src/lib/reading-pages.ts` builds sequential balanced pages of 2–3 original ideas, including setup and takeaway. Examples: 5 ideas → [3,2], 6 → [3,3], 7 → [3,2,2], never a trailing one-idea page. No curriculum text, formula, lesson IDs, or progress storage keys are changed.
+- `FocusLesson` renders all blocks in the selected page. The final formula stays with the takeaway. Back/Next navigate groups; Explore on the final page still opens the playground. Learn/Explore/Check, marking understood, quiz answers, and learning notes are unchanged. Changing text size or modes retains the selected reading page; reading alone never marks a stop understood.
+- The reading panel now fills the available width and has no fixed minimum body height. Rem-based container queries use three columns on wide panels, two on medium panels (a third block spans the second row), and one on narrow/mobile panels. Enlarging text increases the width needed for columns, preserving readability. Classic does not use the grouped renderer and stays unchanged.
+- Tests: `tests/reading-pages.test.ts` verifies balanced grouping, complete unmodified text/order for every forecasting and experimentation lesson, and exactly one final takeaway/formula. `tests/e2e/reading.spec.ts` verifies width usage, grouping, navigation/keyboard controls, retained state, responsive/enlarged text, and unchanged Classic behavior. Update prior one-card-at-a-time expectations rather than restoring the sparse deck.
+- Verification: **23 unit tests, the full 33-test development browser suite, all 3 new reading tests against a fresh production server, typecheck, and production build (87 pages) passed**. Grouped Learn was visually inspected on desktop (both pages of the screenshot's lesson) and mobile. No hosted CI run or production deployment is implied by these local results.
+- Production is currently <https://dsconcepts.vercel.app>, deployed from main in Vercel project `dsconcepts` / Hobby workspace `little-adventurers`. SQL execution was verified live. Automatic GitHub integration still needs Vercel app access to `kunalkohli/stats_learning`; do not assume merging this new PR automatically updates production.
 
 ### Latest: DSConcepts branding and SQL interview practice
 

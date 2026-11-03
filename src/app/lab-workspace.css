@@ -112,8 +112,28 @@ html[data-layout="lab"] .simulation-label { font-family: var(--sans); font-size:
 .guided-steps li { counter-increment: guided; position: relative; border: 1px solid #a8a492; border-radius: 12px; padding: 10px 10px 10px 34px; font-size: .8125rem; line-height: 1.5; }
 .guided-steps li:before { content: counter(guided); position: absolute; left: 9px; top: 10px; width: 17px; height: 17px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-size: .6875rem; font-weight: 900; }
 .mission-card button { margin-top: 15px; border: 2px solid var(--ink); border-radius: 12px; background: #ae4d3d; font: 900 .8125rem var(--sans); box-shadow: 2px 3px 0 var(--ink); padding: 10px; }
-.reading-deck { width: min(650px,100%); border-radius: 17px; box-shadow: 4px 5px 0 var(--ink); }
-.window-bar { font: 800 .625rem var(--sans); }.deck-content { padding: 24px; min-height: 210px; }.deck-content h2 { font-size: 1.5rem; font-weight: 900; }.deck-content>p { font-size: 1rem; line-height: 1.75; }.deck-footer>button { font-size: .8125rem; font-weight: 800; }
+.reading-deck { width: 100%; border-radius: 17px; box-shadow: 4px 5px 0 var(--ink); container: reading / inline-size; }
+.window-bar { font: 800 .625rem var(--sans); }
+.deck-content { display: grid; grid-template-columns: minmax(0,1fr); padding: 0; min-height: 0; }
+.reading-block { min-width: 0; padding: 24px; }
+.reading-block+.reading-block { border-top: 1px solid #d3cfbf; }
+.reading-block-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.reading-number { flex-shrink: 0; color: #7151b1; font-size: .75rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.reading-block h2 { font-size: 1.25rem; line-height: 1.35; font-weight: 900; margin: 0; }
+.reading-block>p { font-size: 1rem; line-height: 1.8; max-width: 65ch; overflow-wrap: anywhere; }
+.reading-takeaway { background: #e6e9d94d; }
+.reading-block .formula { margin-top: 16px; }
+.deck-footer>button { font-size: .8125rem; font-weight: 800; }
+.deck-page-progress { font-size: .75rem; color: var(--muted); }
+@container reading (min-width:42rem) {
+  .deck-content { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .reading-block:nth-child(2) { border-top: 0; border-left: 1px solid #d3cfbf; }
+  .reading-block:nth-child(3) { grid-column: 1 / -1; }
+}
+@container reading (min-width:64rem) {
+  .deck-content[data-block-count="3"] { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .reading-block:nth-child(3) { grid-column: auto; border-top: 0; border-left: 1px solid #d3cfbf; }
+}
 .focus-check { border-radius: 17px; box-shadow: 4px 5px 0 var(--ink); }
 .simulation-options { margin-top: 10px; font-size: .75rem; }.simulation-options>summary { cursor: pointer; color: var(--muted); }.simulation-options>div { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; padding-top: 12px; }
 .simulation-chart { width: 100%; display: block; margin: 15px 0 8px; }.simulation-chart text { fill: var(--muted); font: 600 .6875rem var(--sans); }.simulation-chart .plot-annotation { font-size: .6875rem; font-weight: 900; fill: var(--ink); }
@@ -154,5 +174,5 @@ html[data-layout="lab"] .learning-footer { font: 600 .625rem var(--sans); }
   html[data-layout="lab"] .lab { padding: 14px 12px 0; }html[data-layout="lab"] .lab-controls { padding: 10px; gap: 14px; }html[data-layout="lab"] .simulation-label { margin-inline: -12px; }html[data-layout="lab"] .experiment-lab .lab-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }html[data-layout="lab"] .lab-stats .micro { font-size: .625rem; }html[data-layout="lab"] .lab-stats strong { font-size: .9375rem; }
   .simulation-chart text { font-size: .875rem; }.simulation-chart .plot-annotation { font-size: .75rem; }.simulation-legend { font-size: .75rem; gap: 7px 12px; }
   html[data-layout="lab"] .forecast-intro h1 { font-size: 2rem; }html[data-layout="lab"] .forecast-intro .intro-panel p,html[data-layout="lab"] .forecast-intro .intro-panel li { font-size: .9375rem; }
-  .deck-content { padding: 20px; min-height: 220px; }.deck-content>p { font-size: 1rem; }.focus-check { padding: 18px 12px; }
+  .deck-content { padding: 0; min-height: 0; }.reading-block { padding: 20px; }.reading-block h2 { font-size: 1.25rem; }.reading-block>p { font-size: 1rem; }.focus-check { padding: 18px 12px; }
 }
