@@ -15,6 +15,7 @@ test("experimentation is live and all classic lessons render with correct labs",
     await page.goto(`/experimentation/${lesson.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(lesson.heading);
     await expect(page.locator(".experiment-lab")).toBeVisible();
+    await expect(page.locator(".lesson-table")).toBeVisible();
     await expect(page.locator(".quiz-options button")).toHaveCount(3);
     await page.locator(".quiz-options button").nth(lesson.correct).click();
     await expect(page.locator(".quiz-answer")).toContainText("That’s the idea");
@@ -105,6 +106,7 @@ test("experiment notes and progress survive layouts and stay separate from forec
 
 test("experiment controls update computed metrics and workflow keeps one open step", async ({ page }) => {
   await page.goto("/experimentation/conversion-and-lift");
+  await expect(page.getByRole("button", { name: "Mark as understood", exact: true })).toBeEnabled();
   await expect(page.locator(".lab-stats")).toContainText("2.00%");
   await page.getByRole("slider", { name: "Observed lift (basis points)" }).fill("40");
   await expect(page.locator(".lab-stats")).toContainText("4.00%");

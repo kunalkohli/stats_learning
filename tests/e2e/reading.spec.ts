@@ -85,5 +85,5 @@ test("grouped reading stacks on phones, adapts to large text, and leaves Classic
   await page.getByRole("button", { name: "Classic", exact: true }).click();
   await expect(page.locator(".reading-deck")).toHaveCount(0);
   await expect(page.locator(".lesson-content-panel")).toBeVisible();
-  await expect(page.locator(".idea-point")).toHaveCount(3);
+  await expect(page.locator(".lesson-table tbody tr")).toHaveCount(3);
 });

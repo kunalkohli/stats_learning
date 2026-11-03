@@ -16,7 +16,7 @@ export const parts = [
 export const lessons: Lesson[] = [
   {
     id: 1, slug: "forecast-is-a-range", title: "A forecast is a range", heading: "The future isn’t a single number.", part: 0, minutes: 5, lab: "range",
-    intro: "Northstar is a growing online store. ‘We’ll sell $32,000 next Tuesday’ is a point forecast: one summary of many possible futures. A more useful answer includes a range—and the assumptions behind it.",
+    intro: "Northstar is a fictional online retailer. Its operations team is preparing for next Tuesday and needs to anticipate demand before committing stock, packing capacity, and delivery arrangements. Start with the business question: what sales revenue is plausible on that day, given what we know today? A useful forecast explains the central estimate, a range of possible outcomes, and the assumptions—not just a precise-looking dollar figure.",
     points: [
       { title: "Uncertainty belongs in the answer.", text: "An 80% prediction interval is designed to cover 80% of future observations over repeated forecasts, if the model and its assumptions are appropriate. It isn’t a guarantee." },
       { title: "Further away usually means less certain.", text: "There is more time for surprises to accumulate. The fan below widens with the horizon; its center is not a promise." },

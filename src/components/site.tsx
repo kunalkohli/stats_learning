@@ -12,6 +12,8 @@ import { JourneyLinks, DisplayControls, useLayoutPreference } from "./layout-pre
 import { FocusLesson } from "./focus-lesson";
 import { JourneyParts } from "./journey-parts";
 import { ExperimentJournal } from "./experimentation";
+import { getLessonTeaching, type TeachingTableData } from "@/lib/lesson-teaching";
+import { LessonConceptTables, LessonCase, TeachingTable } from "./lesson-teaching";
 export { Home } from "./home";
 
 export const lessonUrl = (lesson: Lesson) => `/forecasting/${lesson.slug}`;
@@ -51,6 +53,7 @@ function Sidebar({ active, progress, onClose }: { active: number | "map"; progre
 
 export function Forecasting({ lesson }: { lesson?: Lesson }) {
   const { layout } = useLayoutPreference();
+  const teaching = lesson ? getLessonTeaching("forecasting", lesson) : undefined;
   const { progress, ready, storageError, update } = useProgress();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopHidden, setDesktopHidden] = useState(false);
@@ -113,9 +116,10 @@ export function Forecasting({ lesson }: { lesson?: Lesson }) {
       {storageError && <p className="storage-warning" role="status">Browser storage is unavailable. Your work may not persist after you leave this page.</p>}
       {!lesson ? <ForecastIntro progress={progress} /> : <article className="reference-lesson" style={{ "--part-color": parts[lesson.part].color } as React.CSSProperties}>
         {layout !== "lab" && title}
-        {layout === "lab" ? <FocusLesson title={title} idea={lesson} lab={<Lab key={labKey} lesson={lesson} />} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={<ResetLabButton onClick={() => setLabKey(k => k + 1)} />} /> : <div className="lesson-content-panel">
+        {layout === "lab" ? <FocusLesson title={title} idea={lesson} teaching={teaching} lab={<Lab key={labKey} lesson={lesson} />} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={<ResetLabButton onClick={() => setLabKey(k => k + 1)} />} /> : <div className="lesson-content-panel">
           <p className="lesson-intro">{lesson.intro}</p>
-          <div className="idea-points">{lesson.points.map(p => <div className="idea-point" key={p.title}><div><h3>{p.title}</h3><p>{p.text}</p></div></div>)}</div>
+          {teaching?.caseStudy && <LessonCase study={teaching.caseStudy} />}
+          <LessonConceptTables teaching={teaching!} />
           {lesson.formula && <div className="formula">{lesson.formula}</div>}
           <div className="lab-toolbar"><ResetLabButton onClick={() => setLabKey(k => k + 1)} /></div>
           <Lab key={labKey} lesson={lesson} />
@@ -130,6 +134,11 @@ export function Forecasting({ lesson }: { lesson?: Lesson }) {
 
 function ForecastIntro({ progress }: { progress: Progress }) {
   const { layout } = useLayoutPreference();
+  const journeyGuide: TeachingTableData = { label: "How the forecasting journey works", firstColumn: "Part of the journey", rows: [
+    { concept: "One running example", emoji: "🏪", meaning: "Use one business story to connect methods to real planning questions.", example: "Northstar forecasts daily sales with weekly shopping patterns, underlying growth, and a Black Friday peak whose date moves each year." },
+    { concept: "Simulated teaching data", emoji: "🧪", meaning: "Constructed data helps explain which ingredients created the chart. It is not a fitted business forecasting service.", example: "Northstar's simulated components are known, so the diagrams can reveal trend, seasons, and random variation separately." },
+    { concept: "Build the ideas in order", emoji: "🧭", meaning: "Later stops build on earlier distinctions, while the route map still lets you revisit any topic.", example: "Understand Northstar's uncertainty and baselines before comparing ETS, ARIMA, and more complex seasonal pipelines." },
+  ] };
   return <div className="route-page">
     <section className="forecast-intro" id="start">
       <h1>Forecasting,<br /><span className="reference-underline">one idea at a time.</span></h1>
@@ -137,11 +146,7 @@ function ForecastIntro({ progress }: { progress: Progress }) {
         <div className="reference-panel intro-panel">
           <h2>A journey from “what is a forecast?” to the models people actually use.</h2>
           <p>Each stop covers one concept. You read the idea, play with a diagram until it clicks, take away one line, and check yourself with a question.</p>
-          <ul>
-            <li><strong>One running example.</strong> Northstar, an ecommerce company. We forecast daily sales: weekly shopping patterns, year-round growth, and a Black Friday peak whose date moves every year.</li>
-            <li><strong>Everything is simulated.</strong> We know the true answer behind each diagram, so you can see exactly what a method gets right and wrong.</li>
-            <li><strong>Built in order.</strong> Later stops lean on earlier ones. Jump around if you like, but the route is the fastest way through.</li>
-          </ul>
+          <TeachingTable data={journeyGuide} />
           <p className="journey-summary">{lessons.length} stops · {progress.understood.length} marked as understood</p>
           <Link className="button primary" href={lessonUrl(lessons[progress.lastLesson - 1])}>{progress.understood.length ? "Continue learning" : "Take the first step"}<ArrowRight size={18} /></Link>
         </div>

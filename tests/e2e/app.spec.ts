@@ -15,6 +15,7 @@ test("home, journey map, and all 31 lessons render without client errors", async
     await page.goto(`/forecasting/${lesson.slug}`);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(lesson.heading);
     await expect(page.locator(".lab")).toBeVisible();
+    await expect(page.locator(".lesson-table").first()).toBeVisible();
     await expect(page.locator(".quiz-options button")).toHaveCount(3);
     await expect(page.getByRole("button", { name: "Mark as understood", exact: true })).toBeEnabled();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -24,6 +25,7 @@ test("home, journey map, and all 31 lessons render without client errors", async
 
 test("range controls, quiz feedback, and diagram reset work", async ({ page }) => {
   await page.goto("/forecasting/forecast-is-a-range");
+  await expect(page.getByRole("button", { name: "Mark as understood", exact: true })).toBeEnabled();
   await expect(page.getByRole("slider", { name: "How far ahead" })).toHaveValue("28");
   await page.getByRole("slider", { name: "How far ahead" }).fill("60");
   await expect(page.getByRole("slider", { name: "How far ahead" })).toHaveValue("60");
@@ -39,6 +41,7 @@ test("range controls, quiz feedback, and diagram reset work", async ({ page }) =
 
 test("AR playground shows the correct mean reversion and alternating memory", async ({ page }) => {
   await page.goto("/forecasting/arima");
+  await expect(page.getByRole("button", { name: "Mark as understood", exact: true })).toBeEnabled();
   await expect(page.locator(".equation-live")).toContainText("$33.5K");
   await page.getByRole("slider", { name: "AR coefficient φ" }).fill("-0.7");
   await expect(page.locator(".equation-live")).toContainText("$26.5K");
@@ -144,7 +147,7 @@ test("MSTL pipeline diagram and three-model comparison render and respond", asyn
   await expect(page.getByRole("button", { name: "1. Remove seasons", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.locator(".lesson-next a").click();
   await expect(page).toHaveURL(/prophet-dhr-mstl$/);
-  await expect(page.getByRole("table")).toBeVisible();
+  await expect(page.locator(".comparison-table")).toBeVisible();
   await expect(page.locator(".comparison-table thead th")).toHaveText(["Compare", "Prophet", "DHR", "MSTL + ETS"]);
   await expect(page.locator(".comparison-table tbody tr")).toHaveCount(9);
   await expect(page.getByRole("rowheader", { name: "Strengths", exact: true })).toBeVisible();

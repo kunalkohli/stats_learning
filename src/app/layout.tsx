@@ -4,6 +4,7 @@ import "./journeys.css";
 import "./typography.css";
 import "./lab-workspace.css";
 import "./sql-practice.css";
+import "./lesson-teaching.css";
 import { LayoutProvider } from "@/components/layout-preference";
 
 export const metadata: Metadata = {
