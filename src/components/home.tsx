@@ -14,10 +14,10 @@ export function Home() {
   const count = progress.understood.length;
   return <><Header /><main className="home-main" id="main">
     <section className="reference-hero">
-      <h1>Statistics,<br /><span className="reference-underline">one concept at a time.</span></h1>
+      <h1>Data science,<br /><span className="reference-underline">one concept at a time.</span></h1>
       <div className="reference-intro-layout">
         <div className="reference-panel intro-panel">
-          <h2>A personal set of learning journeys.</h2>
+          <h2>Learn the idea. Practice the skill.</h2>
           <p>Each concept is a route of short stops. Every stop explains one idea in plain language, gives you a diagram to play with, and ends with a question to check yourself.</p>
           <p>Examples are generic and all data is simulated, so the true answer behind every chart is known.</p>
           <Link className="button primary" href={count ? `/forecasting/${lessons[progress.lastLesson - 1].slug}` : "/forecasting"}>
@@ -41,6 +41,11 @@ export function Home() {
           <div className="card-meta"><span>LIVE</span><span>{experimentLessons.length} STOPS · {experiments.understood.length} UNDERSTOOD</span></div>
           <h3>Experimentation</h3><p>Test a faster ecommerce stack. From fair buyer assignment to conversion, latency, power, CUPED, guardrails, and a safe rollout decision.</p>
           <div className="journey-progress"><i style={{ width: `${experiments.understood.length / experimentLessons.length * 100}%` }} /></div>
+        </Link>
+        <Link href="/sql-practice" className="journey-card available sql-journey-card">
+          <div className="card-meta"><span>LIVE · INTERVIEW PREP</span><span>24 PROBLEMS</span></div>
+          <h3>SQL Practice</h3><p>Query Northstar’s orders, payments, and refunds. Start with aggregation and joins; advance to first-order cohorts, ranking, LEAD, LAG, and running totals. Write, run, and check real SQL.</p>
+          <span className="sql-card-cta">12 basic + 12 advanced →</span>
         </Link>
         {[
           { name: "Regression", description: "Fitting lines, reading coefficients, confounders and what ‘controlling for’ really means." },

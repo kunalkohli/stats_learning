@@ -5,8 +5,8 @@ test("home, journey map, and all 31 lessons render without client errors", async
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Statistics");
-  await expect(page.getByRole("link", { name: "StatsConcepts home" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Data science");
+  await expect(page.getByRole("link", { name: "DSConcepts home" }).first()).toBeVisible();
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(238, 238, 229)");
   expect(await page.locator(".concept-sketch").evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(290);
   await page.getByRole("link", { name: "Start with forecasting" }).click();

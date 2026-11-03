@@ -1,8 +1,11 @@
 {
-  "name": "concept-journeys",
+  "name": "dsconcepts",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare:sql": "node scripts/prepare-sql-assets.mjs",
+    "predev": "npm run prepare:sql",
+    "prebuild": "npm run prepare:sql",
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
@@ -11,10 +14,13 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@codemirror/lang-sql": "^6.10.0",
+    "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
+    "codemirror": "^6.0.2",
+    "lucide-react": "^0.468.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "lucide-react": "^0.468.0"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

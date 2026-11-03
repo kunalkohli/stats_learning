@@ -1,9 +1,10 @@
-# StatsConcepts — Concept Journeys
+# DSConcepts — Learn it, then try it
 
-A local-first learning site built with **Next.js 16, React 19, TypeScript, and hand-built SVG diagrams**. Two interactive journeys, one fictional ecommerce company: **Northstar**.
+A local-first learning site built with **Next.js 16, React 19, TypeScript, and hand-built SVG diagrams**. Learn concepts and practice SQL with one fictional ecommerce company: **Northstar**. Previously branded StatsConcepts; existing learning notes, progress, and preferences are preserved.
 
 - **Forecasting:** 31 stops, from uncertainty and seasonality to models and practical workflows.
 - **Experimentation:** 24 stops, following an Amazon-like marketplace testing a new product-page cache. Measure buyer conversion, latency, reliability, and the evidence needed for a safe rollout.
+- **SQL Practice:** 24 interview-prep problems (12 basic, 12 advanced), a focused problem statement, a syntax-highlighted editor, and real browser-local DuckDB execution. Inspect schemas/sample data, run queries, compare results, reveal hints, and work through ecommerce/finance cases.
 - **Two layouts:** use the **Classic / Lab** control in the header. Classic keeps the original spacious graph-paper design; Lab adds a compact rail, part cards, concept-card decks, and **Learn / Explore / Check** modes. The preference persists across journeys. Regression and probability remain planned.
 - **Text size:** top-right **A− / 90% / A+** controls default to **90%**. Adjust in 10-point steps from 70% to 140%; click the percentage to reset to 90%. Your setting persists across pages and both layouts without changing browser zoom or lesson progress.
 
@@ -19,6 +20,8 @@ npm run dev
 
 Open **http://localhost:3000**. The server binds to loopback, not the public network. To use another port: `npm run dev -- --port 3001`.
 
+Open **http://localhost:3000/sql-practice** for SQL interview practice. Node **22+** is recommended. `npm run dev` and `npm run build` automatically run `prepare:sql`, copying DuckDB's worker/WASM assets from the installed, locked npm package into ignored `public/sql-engine/`. These relatively large assets are served by this app—not a CDN—and are not committed to Git. Run `npm run prepare:sql` manually if needed. Browser support requires Web Workers and WebAssembly; the first query loads the engine. No database server or external service is required.
+
 ```bash
 npm run build
 npm start
@@ -32,7 +35,7 @@ npm start
 - Stop 31 provides an end-to-end forecasting workflow: define, audit, baseline, backtest, diagnose, try a targeted candidate, compare, and monitor. Includes a model-selection guide and links back to the relevant concepts.
 - Annual Black Friday / Cyber Monday effects calculated from the actual event calendar. Covers moving-date alignment, why a 364-day lag can fail, trend versus seasonality, and event-relative features.
 - Dedicated **autocorrelation** lesson plus **autoregression in ARIMA**: lags, ACF versus PACF, positive/negative AR(1) coefficients, conditional-mean reversion, differencing, and MA innovations versus rolling averages.
-- Local progress, per-lesson notes, a journal, and Markdown export. No account, database, tracking, or hosted service.
+- Local progress, per-lesson notes, a journal, and Markdown export. No account, remote database, tracking, or hosted service.
 - Responsive navigation and reduced-motion support.
 - Original explanations and diagrams with further-reading links to Hyndman & Athanasopoulos, *Forecasting: Principles and Practice*, 3rd edition, [OTexts](https://otexts.com/fpp3/).
 - Experimentation lessons cover randomization, hypotheses, buyer-level assignment, intent-to-treat, lift, latency percentiles, guardrails, A/A and SRM, sampling, confidence intervals, p-values, power/MDE, underpowered winners, stopping, capping, CUPED, triggering, ratios, multiplicity, infrastructure interference, segments, ramps, and decisions.
@@ -47,6 +50,44 @@ Notes and progress stay in this browser’s local storage. Export before clearin
 Experimentation uses constructed data, not Amazon data. Conversion inference assumes independent buyers, mature outcomes, and fixed-horizon large-sample analysis. The trial simulation is a known-variance Gaussian approximation, not exact binomial inference. CUPED, spillovers, and load curves are theoretical/schematic, not fitted engines. Cumulative peeking is not modeled by the independent-tests formula. Every playground states its limitations.
 
 Forecasting notes keep their original storage key and ID migrations. Experimentation notes use a separate key and appear in a separate journal section with their own Markdown export. Layout preferences never migrate or overwrite lesson notes.
+
+## SQL interview practice
+
+### The case and dataset
+
+Northstar Commerce sells products to buyers in the US, GB, and CA. **All transactions are USD cents** regardless of buyer country; no currency conversion is implied. Order timestamps are UTC. The fixed data covers January–June 2026:
+
+- `customers`: 60 fictional buyers, including NULL emails and accounts with no orders.
+- `products`: six catalog products and categories.
+- `orders`: 251 orders with completed, cancelled, and pending statuses.
+- `order_items`: historical sale prices and quantities; line sums reconstruct each order total.
+- `payments`: captured payments and failed attempts, potentially on the same order.
+- `refunds`: succeeded/pending requests, including multiple refunds against one payment.
+
+The compact **Data & schema** panel prioritizes tables used by the current problem. Switch between **Schema** (column names and types) and **Sample data** (first ten rows). Expand **Table notes & relationships** for business definitions, foreign-key relationships, and status meanings. Download the full fixture as SQL from the panel footer. On desktop, the panel stays alongside the editor while scrolling.
+
+### Problems
+
+**Basic (1–12):** SELECT/filter/sort, NULL handling, status counts, monthly revenue, average order value, HAVING, customers without orders, joins by country, conditional aggregation, category line revenue, net collections, and March spend thresholds.
+
+**Advanced (13–24):** first-ever completed orders; first-ever March orders over $100; RANK versus DENSE_RANK ties; LEAD/LAG purchase gaps; running customer spend; monthly revenue changes; second-purchase timing; country winners with ties; refund-safe financial preaggregation; calendar filling before running sums.
+
+### Editor and checking
+
+- CodeMirror provides syntax highlighting, line numbers, schema-aware completion, and **Cmd/Ctrl+Enter** to run. A plain-text editor remains available if enhancement fails.
+- New problems start with a **blank editor**, so you write the query yourself. Returning to a problem restores only your own saved draft. **Clear query** asks before removing a nonempty draft and stays blank after reload. Hints and solution loading are opt-in; SQL is never filled automatically.
+- **Run query** executes your SQL; it never marks a problem solved. **Expected output** lets you inspect the target without awarding progress.
+- **Check answer** compares named columns and typed result values with the reference, not SQL text. Column order and alias case may differ. Row order is ignored unless the question requires sorting. NULL differs from the text `NULL`, and duplicate row counts matter. Fractional numbers are normalized to eight decimal places; monetary answers stay in cents.
+- A correct visible result is also checked against a deterministic amount-variation fixture. This catches some hardcoded outputs and threshold errors, but passing two fixtures is **not proof of correctness on every possible dataset**.
+- Hints are progressive; solutions/explanations are revealed only on request. Each problem saves its query draft and successful checks in this browser under `dsconcepts-sql-progress-v1`. The workspace intentionally omits a large heading card, topic tags, scratchpad, and checking explainer to keep attention on the statement, query, results, and data. Previously saved scratchpad notes are preserved in storage, not displayed or deleted. Existing `statsconcepts-*` keys intentionally remain unchanged for backwards compatibility.
+
+### Execution limits and dialect
+
+The dialect is **DuckDB SQL**, not PostgreSQL or MySQL. Examples use `strftime`, `date_diff`, timestamp literals, CTEs, and window functions. CodeMirror's PostgreSQL grammar is used only for highlighting/completion; DuckDB decides query semantics.
+
+Queries run in a dedicated DuckDB Web Worker against a fresh in-memory fixture per execution. A one-statement SELECT/WITH guard and an outer SELECT query context reject writes and statement escapes. External access and extension installation/loading are disabled, configuration is locked, and the engine is given a 128 MB query memory limit. Output is capped at 500 rows. A 5-second execution deadline (separate 30-second engine startup limit) or **Cancel query** terminates the worker; subsequent runs recreate it. This is a local teaching sandbox, not a security boundary for executing arbitrary code on a production server. No query is uploaded.
+
+DuckDB worker/WASM assets are copied from npm during development/build. Its MIT notice is included at `public/licenses/duckdb-wasm.txt`; CodeMirror is MIT-licensed through its npm distribution. Bundled Nunito retains its separate SIL OFL notice.
 
 ## Project map
 
@@ -63,7 +104,7 @@ Forecasting notes keep their original storage key and ID migrations. Experimenta
 | `src/components/chart.tsx` | SVG time-series and ACF charts |
 | `src/components/site.tsx` | Homepage, route map, lessons, journal |
 | `src/components/home.tsx` | Reference-style homepage and concept library |
-| `src/components/chrome.tsx` | StatsConcepts branding, header, and sketches |
+| `src/components/chrome.tsx` | DSConcepts branding, header, and sketches |
 | `src/components/route-map.tsx` | Linked winding route map and mobile equivalent |
 | `src/components/progress.ts` | Browser storage hook |
 | `src/app/globals.css` | Paper/notebook design and responsive styles |
@@ -81,6 +122,15 @@ Forecasting notes keep their original storage key and ID migrations. Experimenta
 | `src/lib/display-preferences.ts` | Default, limits, and safe restoration of text-size preferences |
 | `src/lib/journey-guides.ts` | Two actionable guided steps for each experimentation playground |
 | `public/fonts/` | Self-hosted Nunito variable font and its OFL license |
+| `src/lib/sql/questions.ts` | 24 SQL prompts, output contracts, hints, solutions, and explanations |
+| `src/lib/sql/data.ts` | Reproducible Northstar tables, schema, and two fixtures |
+| `src/lib/sql/runner.ts` | Browser-local DuckDB worker lifecycle, limits, and result conversion |
+| `src/lib/sql/checker.ts` | Read-only statement guard and result comparison |
+| `src/lib/sql/progress.ts` | Independent draft/solved-state normalization; preserves legacy notes |
+| `src/components/sql/` | Practice workspace, CodeMirror editor, schema explorer, and result tables |
+| `src/app/sql-practice/` | Overview and 24 statically generated problem routes |
+| `src/app/sql-practice.css` | Practice layout and responsive navigation |
+| `scripts/prepare-sql-assets.mjs` | Copy installed engine assets into ignored public output |
 | `.github/CODEOWNERS` | Owner review policy for all files |
 | `.github/REVIEW_POLICY.md` | Owner-review rules, initial-PR limitations, and deferred CI setup |
 

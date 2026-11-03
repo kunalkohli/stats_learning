@@ -1,0 +1,149 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, Database, Menu, Play, X } from "lucide-react";
+import { sqlQuestions, sqlQuestionUrl, type SqlQuestion } from "@/lib/sql/questions";
+import { practiceTables, fixtureSql } from "@/lib/sql/data";
+import { SQL_PROGRESS_KEY, emptySqlProgress, restoreSqlProgress, type SqlProgress } from "@/lib/sql/progress";
+import { SqlRunner, type Execution } from "@/lib/sql/runner";
+import { JourneyLinks, DisplayControls } from "../layout-preference";
+import { SqlEditor } from "./editor";
+import { ResultsTable } from "./results";
+
+function useSqlProgress() {
+  const [progress, setProgress] = useState<SqlProgress>(emptySqlProgress), [ready, setReady] = useState(false), [error, setError] = useState(false);
+  useEffect(() => { try { const raw = localStorage.getItem(SQL_PROGRESS_KEY); if (raw) setProgress(restoreSqlProgress(JSON.parse(raw))); } catch { setError(true); } setReady(true); }, []);
+  function update(fn: (p: SqlProgress) => SqlProgress) { setProgress(p => { const next = fn(p); try { localStorage.setItem(SQL_PROGRESS_KEY, JSON.stringify(next)); } catch { setError(true); } return next; }); }
+  return { progress, ready, storageError: error, update };
+}
+
+function DataExplorer({ question }: { question?: SqlQuestion }) {
+  const [selected, setSelected] = useState(question?.tables[0] ?? "customers");
+  const [view, setView] = useState<"schema" | "data">("schema");
+  const table = practiceTables.find(t => t.name === selected)!;
+  const relevant = practiceTables.filter(t => question?.tables.includes(t.name));
+  const other = practiceTables.filter(t => !question?.tables.includes(t.name));
+  function download() {
+    const url = URL.createObjectURL(new Blob([`-- Northstar Commerce · fictional teaching data\n-- All amounts USD cents; dates/times UTC.\n${fixtureSql()}`], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = "dsconcepts-northstar-fixture.sql"; a.click(); URL.revokeObjectURL(url);
+  }
+  const options = (tables: typeof practiceTables) => tables.map(t => <option key={t.name} value={t.name}>{t.name} · {t.rows.length} rows</option>);
+  return <section className="sql-schema-panel" aria-label="Data and schema">
+    <div className="sql-panel-heading"><Database size={16} /><h2>Data & schema</h2></div>
+    <div className="sql-schema-body">
+      <label className="sr-only" htmlFor="sql-table-picker">Inspect a table</label>
+      <select id="sql-table-picker" value={selected} onChange={e => setSelected(e.target.value)}>
+        {question ? <><optgroup label="Used in this problem">{options(relevant)}</optgroup><optgroup label="Other tables">{options(other)}</optgroup></> : options(practiceTables)}
+      </select>
+      <div className="sql-data-tabs" role="group" aria-label="Table view">
+        <button aria-pressed={view === "schema"} onClick={() => setView("schema")}>Schema</button>
+        <button aria-pressed={view === "data"} onClick={() => setView("data")}>Sample data</button>
+      </div>
+      {view === "schema" ? <dl className="sql-columns">{table.columns.map(c => <div key={c.name}><dt>{c.name}</dt><dd>{c.type.replace(" PRIMARY KEY", " · PK")}</dd></div>)}</dl> : <div className="sql-sample-data"><p>First {Math.min(10, table.rows.length)} of {table.rows.length} rows</p><ResultsTable key={selected} compact result={{ columns: table.columns.map(c => c.name), rows: table.rows.slice(0, 10), truncated: false }} label={`${table.name} preview`} /></div>}
+      <details className="sql-table-notes" key={selected}><summary>Table notes & relationships</summary><p>{table.description}</p>{table.columns.some(c => c.note) && <ul>{table.columns.filter(c => c.note).map(c => <li key={c.name}><code>{c.name}</code> {c.note}</li>)}</ul>}<p>Fictional teaching data. Money is USD cents; timestamps are UTC.</p></details>
+      <div className="sql-data-footer"><span>USD cents · UTC</span><button className="sql-subtle-button" onClick={download} aria-label="Download complete fixture SQL">Download SQL ↓</button></div>
+    </div>
+  </section>;
+}
+
+export function SqlPractice({ question }: { question?: SqlQuestion }) {
+  const { progress, ready, storageError, update } = useSqlProgress();
+  const [sidebarOpen, setSidebarOpen] = useState(false), [desktopHidden, setDesktopHidden] = useState(false), [isMobile, setMobile] = useState(false);
+  const [busy, setBusy] = useState(false), [error, setError] = useState(""), [execution, setExecution] = useState<Execution | null>(null), [tab, setTab] = useState("actual"), [hintCount, setHintCount] = useState(0);
+  const runner = useRef<SqlRunner | null>(null), runId = useRef(0), busyRef = useRef(false);
+  const query = question ? progress.drafts[question.slug] ?? "" : "";
+  const queryRef = useRef(query); queryRef.current = query;
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 760px)"), sync = () => setMobile(media.matches);
+    sync(); media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+  useEffect(() => {
+    const instance = new SqlRunner(); runner.current = instance;
+    return () => { runId.current++; instance.cancel(); };
+  }, []);
+  useEffect(() => { if (ready && question && progress.lastQuestion !== question.slug) update(p => ({ ...p, lastQuestion: question.slug })); }, [ready, question?.slug]);
+  const solved = question && progress.solved.includes(question.slug), next = question && sqlQuestions[question.id], prev = question && sqlQuestions[question.id - 2];
+  function changeQuery(text: string) {
+    if (busyRef.current) cancel();
+    if (question && ready) update(p => ({ ...p, drafts: { ...p.drafts, [question.slug]: text } }));
+    setExecution(null); setError("");
+  }
+  async function run(mode: "run" | "check" | "expected") {
+    if (!question || !ready || busyRef.current || !runner.current) return;
+    const id = ++runId.current;
+    busyRef.current = true; setBusy(true); setError(""); setExecution(null); setTab(mode === "expected" ? "expected" : "actual");
+    try {
+      const result = await runner.current.execute(mode === "expected" ? question.solution : queryRef.current, mode === "run" ? undefined : question, mode === "expected");
+      if (id !== runId.current) return;
+      setExecution(result);
+      if (result.feedback?.correct) update(p => ({ ...p, solved: p.solved.includes(question.slug) ? p.solved : [...p.solved, question.slug] }));
+    } catch (cause) { if (id === runId.current) setError(cause instanceof Error ? cause.message : "The query failed. Check your SQL and retry."); }
+    finally { if (id === runId.current) { busyRef.current = false; setBusy(false); } }
+  }
+  function cancel() { runId.current++; runner.current?.cancel(); busyRef.current = false; setBusy(false); setError("Query cancelled. Its worker was stopped; your draft is unchanged."); }
+  function load(text: string) { if (query.trim() !== text.trim() && !window.confirm("Replace your current query?")) return; changeQuery(text); }
+  const resume = sqlQuestions.find(q => q.slug === progress.lastQuestion) ?? sqlQuestions[0];
+  return <div className={`learning-shell sql-shell ${desktopHidden ? "contents-hidden" : ""}`}>
+    <header className="learning-header"><button className="contents-button" aria-controls="sql-contents" aria-expanded={isMobile ? sidebarOpen : !desktopHidden} onClick={() => isMobile ? setSidebarOpen(!sidebarOpen) : setDesktopHidden(!desktopHidden)}><Menu size={15} />Contents</button><JourneyLinks active="sql" /><DisplayControls /><div className="header-arrows"><Link href={prev ? sqlQuestionUrl(prev) : "/sql-practice"} className="icon-button" aria-label="Previous SQL problem"><ArrowLeft size={15} /></Link><Link href={next ? sqlQuestionUrl(next) : "/sql-practice"} className="icon-button" aria-label="Next SQL problem"><ArrowRight size={15} /></Link></div></header>
+    {sidebarOpen && <button className="sidebar-overlay" aria-label="Close contents" onClick={() => setSidebarOpen(false)} />}
+    <aside id="sql-contents" className={`learning-sidebar ${sidebarOpen ? "open" : ""}`}><div className="sidebar-top"><div className="sidebar-caption"><span className="micro">INTERVIEW PREP</span><button className="icon-button sidebar-close" aria-label="Close contents" onClick={() => setSidebarOpen(false)}><X size={15} /></button></div><Link className="sidebar-title" href="/sql-practice">SQL Practice</Link><div className="sidebar-progress"><div><i style={{ width: `${progress.solved.length / sqlQuestions.length * 100}%` }} /></div><span>{progress.solved.length} / {sqlQuestions.length} solved</span></div></div><nav className="contents-nav" aria-label="SQL problem contents"><Link className="map-link" href="/sql-practice">Practice overview</Link>{(["basic", "advanced"] as const).map((level, i) => <details className="sidebar-part" open key={level} style={{ "--part-color": i ? "#7151b1" : "#397c73" } as React.CSSProperties}><summary className="experiment-part-toggle"><span className="part-dot" />{level === "basic" ? "01 · Basic SQL" : "02 · Advanced SQL"}</summary><div className="part-lessons">{sqlQuestions.filter(q => q.level === level).map(q => <Link key={q.slug} href={sqlQuestionUrl(q)} onClick={() => setSidebarOpen(false)} className={`${question?.slug === q.slug ? "active" : ""} ${progress.solved.includes(q.slug) ? "understood" : ""}`} aria-current={question?.slug === q.slug ? "page" : undefined}><span className="lesson-dot">{progress.solved.includes(q.slug) && <Check size={9} />}</span><span className="lesson-number">{q.id}</span>{q.title}</Link>)}</div></details>)}</nav><div className="sidebar-bottom"><Link href="/">DSConcepts home ↗</Link><Link href="/journal">Learning journal ↗</Link></div></aside>
+    <main className="learning-main">{storageError && <p className="storage-warning" role="status">Browser storage is unavailable. Query drafts and solved progress may not persist.</p>}
+      {!question ? <div className="sql-overview">
+        <section className="sql-hero">
+          <span className="eyebrow">DSCONCEPTS · INTERVIEW PRACTICE</span>
+          <h1>Practice SQL questions.</h1>
+          <p>Prepare for interviews with ecommerce and finance SQL questions. Write and run queries on Northstar’s orders, payments, and refunds—from basic aggregations to window functions and first-order cohorts.</p>
+          <div className="sql-hero-facts"><span>12 basic + 12 advanced problems</span><span>6 inspectable tables</span><span>DuckDB SQL · runs in your browser</span></div>
+          <Link className="button primary" href={sqlQuestionUrl(resume)}>{progress.solved.length || resume.id > 1 ? "Continue SQL practice" : "Start with the basics"}<ArrowRight size={16} /></Link>
+        </section>
+        <div className="sql-overview-how">
+          <div><strong>01 · Inspect</strong><p>Read the business definition and explore the table schema and sample rows.</p></div>
+          <div><strong>02 · Query</strong><p>Write your SQL from scratch and run it locally against the practice data.</p></div>
+          <div><strong>03 · Check</strong><p>Compare results against a reference on the visible data and an amount variation—not against query text.</p></div>
+        </div>
+        {(["basic", "advanced"] as const).map(level => <section className="sql-question-section" key={level}>
+          <div className="sql-section-heading"><span className="eyebrow">{level === "basic" ? "SECTION 01" : "SECTION 02"}</span><h2>{level === "basic" ? "Build the foundations." : "Go beyond GROUP BY."}</h2><p>{level === "basic" ? "Filters, dates, joins, aggregation, and financial grain." : "ROW_NUMBER, RANK, DENSE_RANK, LEAD, LAG, running totals, and cohorts."}</p></div>
+          <div className="sql-question-grid">{sqlQuestions.filter(q => q.level === level).map(q => <Link href={sqlQuestionUrl(q)} className="sql-problem-card" key={q.slug}><div><span className="micro">PROBLEM {String(q.id).padStart(2, "0")}</span><span>{progress.solved.includes(q.slug) ? "✓ Solved" : "→"}</span></div><h3>{q.title}</h3><p>{q.tags.join(" · ")}</p></Link>)}</div>
+        </section>)}
+        <details className="sql-overview-data"><summary>Explore the Northstar dataset before starting</summary><DataExplorer /></details>
+      </div> : <article className="sql-workspace">
+        <h1 className="sr-only">{question.title}</h1>
+        <section className="sql-problem-statement" aria-label="Problem statement">
+          <div className="sql-problem-meta"><span className="eyebrow">PROBLEM {question.id} / {sqlQuestions.length} · {question.level.toUpperCase()}</span>{solved && <span className="sql-solved-status">✓ Solved</span>}<Link href="/sql-practice">All problems ↗</Link></div>
+          <p>{question.prompt}</p>
+          <div className="sql-output-contract"><span>Output</span>{question.columns.map(c => <code key={c}>{c}</code>)}</div>
+        </section>
+        <div className="sql-workspace-grid"><div className="sql-query-column">
+          <section className="sql-code-panel">
+            <div className="sql-panel-heading"><span className="sql-file-dot" /><h2>query.sql</h2><span>DuckDB SQL</span></div>
+            {ready ? <SqlEditor value={query} onChange={changeQuery} onRun={() => { void run("run"); }} /> : <p className="sql-loading">Restoring your saved draft…</p>}
+            <div className="sql-run-toolbar">
+              <button className="sql-run-button" disabled={!ready || busy} onClick={() => { void run("run"); }}><Play size={14} />Run query</button>
+              <button className="sql-check-button" disabled={!ready || busy} onClick={() => { void run("check"); }}><Check size={15} />Check answer</button>
+              {busy ? <button className="sql-subtle-button" onClick={cancel}>Cancel query</button> : <button className="sql-subtle-button" disabled={!ready} onClick={() => load("")}>Clear query</button>}
+              <span>⌘ / Ctrl + Enter to run</span>
+            </div>
+          </section>
+          {busy && <p className="sql-running" role="status">Running locally… first use loads the local SQL engine. You can cancel at any time.</p>}
+          {error && <div className="sql-error" role="alert"><strong>Query could not finish</strong><pre>{error}</pre></div>}
+          {execution?.feedback && <div className={`sql-feedback ${execution.feedback.correct ? "correct" : "incorrect"}`} role="status"><strong>{execution.feedback.correct ? "That’s a match." : "Not a match yet."}</strong><p>{execution.feedback.message}</p>{!!execution.feedback.missing.length && <details><summary>Missing result rows (sample)</summary><ResultsTable result={{ columns: question.columns, rows: execution.feedback.missing, truncated: false }} label="Missing rows" /></details>}{!!execution.feedback.extra.length && <details><summary>Unexpected result rows (sample)</summary><ResultsTable result={{ columns: question.columns, rows: execution.feedback.extra, truncated: false }} label="Unexpected rows" /></details>}</div>}
+          <section className="sql-output-panel">
+            <div className="sql-results-tabs"><button aria-pressed={tab === "actual"} onClick={() => setTab("actual")}>Your results</button><button aria-pressed={tab === "expected"} disabled={busy} onClick={() => { if (execution?.expected) setTab("expected"); else void run("expected"); }}>Expected output</button>{execution && <span>{Math.round(execution.milliseconds)} ms</span>}</div>
+            {execution && (tab === "actual" ? execution.result : execution.expected) ? <ResultsTable key={`${tab}-${execution.milliseconds}`} result={(tab === "actual" ? execution.result : execution.expected)!} label={tab === "actual" ? "Query results" : "Expected results"} /> : <div className="sql-results-placeholder"><p>Run a query to see results.</p></div>}
+          </section>
+          <section className="sql-help">
+            <button className="sql-subtle-button" onClick={() => setHintCount(n => Math.min(n + 1, question.hints.length))} disabled={hintCount === question.hints.length}>Show a hint · {hintCount}/{question.hints.length}</button>
+            {question.hints.slice(0, hintCount).map((hint, i) => <p key={hint}><strong>Hint {i + 1}.</strong> {hint}</p>)}
+            <details className="sql-solution"><summary>Reveal solution & explanation</summary><pre>{question.solution}</pre><p>{question.explanation}</p><button className="sql-subtle-button" disabled={busy || !ready} onClick={() => load(question.solution)}>Load solution into editor</button></details>
+          </section>
+        </div><div className="sql-context-column">
+          <DataExplorer question={question} />
+        </div></div>
+        <nav className="sql-problem-navigation" aria-label="Problem navigation"><Link href={prev ? sqlQuestionUrl(prev) : "/sql-practice"}>← {prev ? prev.title : "Practice overview"}</Link><Link href={next ? sqlQuestionUrl(next) : "/sql-practice"}>{next ? next.title : "Back to all problems"} →</Link></nav>
+      </article>}
+      <footer className="learning-footer"><span>DSConcepts · learn it, then try it.</span><Link href="/sql-practice">SQL interview practice ↗</Link></footer>
+    </main>
+  </div>;
+}
