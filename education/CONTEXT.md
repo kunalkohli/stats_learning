@@ -1,6 +1,6 @@
 # DSConcepts — agent onboarding context
 
-Last updated: **2026-11-01**.
+Last updated: **2026-11-02**.
 
 This is the local handoff document for the education/learning project. Read it before continuing development, then inspect the current source rather than treating this document as a replacement for it.
 
@@ -17,6 +17,16 @@ Read the project's `AGENTS.md` before editing. Next.js generates an instruction 
 ## 2. What we are building
 
 **DSConcepts** (formerly StatsConcepts) is a local-first educational app for learning data-science concepts and practicing interview skills. Forecasting (31 stops), experimentation (24 stops), and SQL Practice (24 problems) are implemented. Regression and probability/distributions remain **planned**.
+
+### Latest: fuller Lab Learn panels
+
+- The user found the one-paragraph cards too sparse and explicitly requested a **new PR** combining 2–3 cards into one. Work is on `feat/grouped-learning-cards`, branched from updated `origin/main` after PR #2 was merged. Do not merge or deploy automatically.
+- `src/lib/reading-pages.ts` builds sequential balanced pages of 2–3 original ideas, including setup and takeaway. Examples: 5 ideas → [3,2], 6 → [3,3], 7 → [3,2,2], never a trailing one-idea page. No curriculum text, formula, lesson IDs, or progress storage keys are changed.
+- `FocusLesson` renders all blocks in the selected page. The final formula stays with the takeaway. Back/Next navigate groups; Explore on the final page still opens the playground. Learn/Explore/Check, marking understood, quiz answers, and learning notes are unchanged. Changing text size or modes retains the selected reading page; reading alone never marks a stop understood.
+- The reading panel now fills the available width and has no fixed minimum body height. Rem-based container queries use three columns on wide panels, two on medium panels (a third block spans the second row), and one on narrow/mobile panels. Enlarging text increases the width needed for columns, preserving readability. Classic does not use the grouped renderer and stays unchanged.
+- Tests: `tests/reading-pages.test.ts` verifies balanced grouping, complete unmodified text/order for every forecasting and experimentation lesson, and exactly one final takeaway/formula. `tests/e2e/reading.spec.ts` verifies width usage, grouping, navigation/keyboard controls, retained state, responsive/enlarged text, and unchanged Classic behavior. Update prior one-card-at-a-time expectations rather than restoring the sparse deck.
+- Verification: **23 unit tests, the full 33-test development browser suite, all 3 new reading tests against a fresh production server, typecheck, and production build (87 pages) passed**. Grouped Learn was visually inspected on desktop (both pages of the screenshot's lesson) and mobile. No hosted CI run or production deployment is implied by these local results.
+- Production is currently <https://dsconcepts.vercel.app>, deployed from main in Vercel project `dsconcepts` / Hobby workspace `little-adventurers`. SQL execution was verified live. Automatic GitHub integration still needs Vercel app access to `kunalkohli/stats_learning`; do not assume merging this new PR automatically updates production.
 
 ### Latest: DSConcepts branding and SQL interview practice
 

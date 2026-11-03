@@ -6,6 +6,7 @@ A local-first learning site built with **Next.js 16, React 19, TypeScript, and h
 - **Experimentation:** 24 stops, following an Amazon-like marketplace testing a new product-page cache. Measure buyer conversion, latency, reliability, and the evidence needed for a safe rollout.
 - **SQL Practice:** 24 interview-prep problems (12 basic, 12 advanced), a focused problem statement, a syntax-highlighted editor, and real browser-local DuckDB execution. Inspect schemas/sample data, run queries, compare results, reveal hints, and work through ecommerce/finance cases.
 - **Two layouts:** use the **Classic / Lab** control in the header. Classic keeps the original spacious graph-paper design; Lab adds a compact rail, part cards, concept-card decks, and **Learn / Explore / Check** modes. The preference persists across journeys. Regression and probability remain planned.
+- **Fuller Learn panels:** Lab groups two or three ideas into each reading page instead of showing one short paragraph at a time. Panels use the available desktop width, with responsive columns that stack on narrow screens or enlarged text. Six former cards become two pages; all explanations, formulas, and takeaways stay intact. Classic is unchanged.
 - **Text size:** top-right **A− / 90% / A+** controls default to **90%**. Adjust in 10-point steps from 70% to 140%; click the percentage to reset to 90%. Your setting persists across pages and both layouts without changing browser zoom or lesson progress.
 
 **Agent onboarding:** Read [education/CONTEXT.md](education/CONTEXT.md) for implementation history, user preferences, architecture, curriculum, storage migrations, and development/testing guidance.
@@ -115,6 +116,7 @@ DuckDB worker/WASM assets are copied from npm during development/build. Its MIT 
 | `src/components/experiment-labs.tsx` | Nineteen kinds of experimentation playground |
 | `src/components/layout-preference.tsx` | Shared persistent Classic/Lab choice and journey navigation |
 | `src/components/focus-lesson.tsx` | Lab reading cards and Learn/Explore/Check modes for both journeys |
+| `src/lib/reading-pages.ts` | Balanced groups of 2–3 reading ideas, preserving order and final formula/takeaway |
 | `src/components/journey-parts.tsx` | Linked part-card overview |
 | `src/app/journeys.css` | New journey styles and scoped Lab design |
 | `src/app/lab-workspace.css` | Screenshot-inspired rounded Lab typography, panels, and responsive toolbar |

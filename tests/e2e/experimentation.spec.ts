@@ -28,8 +28,9 @@ test("layout choice persists across journeys and the card deck, modes, and reset
   await page.getByRole("button", { name: "Lab", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-layout", "lab");
   await expect(page.locator(".reading-deck")).toContainText("The setup");
-  await page.locator(".deck-next").click();
   await expect(page.locator(".reading-deck")).toContainText("The counterfactual is missing");
+  await page.locator(".deck-next").click();
+  await expect(page.locator(".reading-deck")).toContainText("Random assignment makes a fair starting point");
   await page.getByRole("button", { name: "02 · Explore" }).click();
   await page.getByRole("button", { name: "Random assignment", exact: true }).click();
   await expect(page.getByRole("button", { name: "Random assignment", exact: true })).toHaveAttribute("aria-pressed", "true");
