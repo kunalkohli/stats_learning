@@ -20,12 +20,31 @@ function useSqlProgress() {
 
 function DataExplorer({ question }: { question?: SqlQuestion }) {
   const [selected, setSelected] = useState(question?.tables[0] ?? "customers");
+  const [view, setView] = useState<"schema" | "data">("schema");
   const table = practiceTables.find(t => t.name === selected)!;
+  const relevant = practiceTables.filter(t => question?.tables.includes(t.name));
+  const other = practiceTables.filter(t => !question?.tables.includes(t.name));
   function download() {
     const url = URL.createObjectURL(new Blob([`-- Northstar Commerce · fictional teaching data\n-- All amounts USD cents; dates/times UTC.\n${fixtureSql()}`], { type: "text/plain;charset=utf-8" }));
     const a = document.createElement("a"); a.href = url; a.download = "dsconcepts-northstar-fixture.sql"; a.click(); URL.revokeObjectURL(url);
   }
-  return <section className="sql-schema-panel"><div className="sql-panel-heading"><Database size={16} /><h2>Data & schema</h2><span>{practiceTables.length} tables</span></div><div className="sql-schema-body"><label htmlFor="sql-table-picker">Inspect a table</label><select id="sql-table-picker" value={selected} onChange={e => setSelected(e.target.value)}>{practiceTables.map(t => <option key={t.name} value={t.name}>{t.name} · {t.rows.length} rows</option>)}</select><p>{table.description}</p><dl className="sql-columns">{table.columns.map(c => <div key={c.name}><dt>{c.name}</dt><dd>{c.type.replace(" PRIMARY KEY", " · PK")}{c.note && <small>{c.note}</small>}</dd></div>)}</dl><details className="sql-sample"><summary>Preview {table.name} · first 10 rows</summary><ResultsTable key={selected} result={{ columns: table.columns.map(c => c.name), rows: table.rows.slice(0, 10), truncated: false }} label={`${table.name} preview`} /></details><button className="sql-subtle-button" onClick={download}>Download complete fixture SQL ↓</button><p className="sql-schema-note">Northstar is fictional. All amounts are USD cents; timestamps are UTC. The data is deterministic, including nulls, ties, failed payment attempts, and multiple refunds.</p></div></section>;
+  const options = (tables: typeof practiceTables) => tables.map(t => <option key={t.name} value={t.name}>{t.name} · {t.rows.length} rows</option>);
+  return <section className="sql-schema-panel" aria-label="Data and schema">
+    <div className="sql-panel-heading"><Database size={16} /><h2>Data & schema</h2></div>
+    <div className="sql-schema-body">
+      <label className="sr-only" htmlFor="sql-table-picker">Inspect a table</label>
+      <select id="sql-table-picker" value={selected} onChange={e => setSelected(e.target.value)}>
+        {question ? <><optgroup label="Used in this problem">{options(relevant)}</optgroup><optgroup label="Other tables">{options(other)}</optgroup></> : options(practiceTables)}
+      </select>
+      <div className="sql-data-tabs" role="group" aria-label="Table view">
+        <button aria-pressed={view === "schema"} onClick={() => setView("schema")}>Schema</button>
+        <button aria-pressed={view === "data"} onClick={() => setView("data")}>Sample data</button>
+      </div>
+      {view === "schema" ? <dl className="sql-columns">{table.columns.map(c => <div key={c.name}><dt>{c.name}</dt><dd>{c.type.replace(" PRIMARY KEY", " · PK")}</dd></div>)}</dl> : <div className="sql-sample-data"><p>First {Math.min(10, table.rows.length)} of {table.rows.length} rows</p><ResultsTable key={selected} compact result={{ columns: table.columns.map(c => c.name), rows: table.rows.slice(0, 10), truncated: false }} label={`${table.name} preview`} /></div>}
+      <details className="sql-table-notes" key={selected}><summary>Table notes & relationships</summary><p>{table.description}</p>{table.columns.some(c => c.note) && <ul>{table.columns.filter(c => c.note).map(c => <li key={c.name}><code>{c.name}</code> {c.note}</li>)}</ul>}<p>Fictional teaching data. Money is USD cents; timestamps are UTC.</p></details>
+      <div className="sql-data-footer"><span>USD cents · UTC</span><button className="sql-subtle-button" onClick={download} aria-label="Download complete fixture SQL">Download SQL ↓</button></div>
+    </div>
+  </section>;
 }
 
 export function SqlPractice({ question }: { question?: SqlQuestion }) {
@@ -64,13 +83,13 @@ export function SqlPractice({ question }: { question?: SqlQuestion }) {
     finally { if (id === runId.current) { busyRef.current = false; setBusy(false); } }
   }
   function cancel() { runId.current++; runner.current?.cancel(); busyRef.current = false; setBusy(false); setError("Query cancelled. Its worker was stopped; your draft is unchanged."); }
-  function load(text: string) { if (query.trim() !== text.trim() && !window.confirm("Replace your current query? Your scratchpad will not change.")) return; changeQuery(text); }
+  function load(text: string) { if (query.trim() !== text.trim() && !window.confirm("Replace your current query?")) return; changeQuery(text); }
   const resume = sqlQuestions.find(q => q.slug === progress.lastQuestion) ?? sqlQuestions[0];
   return <div className={`learning-shell sql-shell ${desktopHidden ? "contents-hidden" : ""}`}>
     <header className="learning-header"><button className="contents-button" aria-controls="sql-contents" aria-expanded={isMobile ? sidebarOpen : !desktopHidden} onClick={() => isMobile ? setSidebarOpen(!sidebarOpen) : setDesktopHidden(!desktopHidden)}><Menu size={15} />Contents</button><JourneyLinks active="sql" /><DisplayControls /><div className="header-arrows"><Link href={prev ? sqlQuestionUrl(prev) : "/sql-practice"} className="icon-button" aria-label="Previous SQL problem"><ArrowLeft size={15} /></Link><Link href={next ? sqlQuestionUrl(next) : "/sql-practice"} className="icon-button" aria-label="Next SQL problem"><ArrowRight size={15} /></Link></div></header>
     {sidebarOpen && <button className="sidebar-overlay" aria-label="Close contents" onClick={() => setSidebarOpen(false)} />}
     <aside id="sql-contents" className={`learning-sidebar ${sidebarOpen ? "open" : ""}`}><div className="sidebar-top"><div className="sidebar-caption"><span className="micro">INTERVIEW PREP</span><button className="icon-button sidebar-close" aria-label="Close contents" onClick={() => setSidebarOpen(false)}><X size={15} /></button></div><Link className="sidebar-title" href="/sql-practice">SQL Practice</Link><div className="sidebar-progress"><div><i style={{ width: `${progress.solved.length / sqlQuestions.length * 100}%` }} /></div><span>{progress.solved.length} / {sqlQuestions.length} solved</span></div></div><nav className="contents-nav" aria-label="SQL problem contents"><Link className="map-link" href="/sql-practice">Practice overview</Link>{(["basic", "advanced"] as const).map((level, i) => <details className="sidebar-part" open key={level} style={{ "--part-color": i ? "#7151b1" : "#397c73" } as React.CSSProperties}><summary className="experiment-part-toggle"><span className="part-dot" />{level === "basic" ? "01 · Basic SQL" : "02 · Advanced SQL"}</summary><div className="part-lessons">{sqlQuestions.filter(q => q.level === level).map(q => <Link key={q.slug} href={sqlQuestionUrl(q)} onClick={() => setSidebarOpen(false)} className={`${question?.slug === q.slug ? "active" : ""} ${progress.solved.includes(q.slug) ? "understood" : ""}`} aria-current={question?.slug === q.slug ? "page" : undefined}><span className="lesson-dot">{progress.solved.includes(q.slug) && <Check size={9} />}</span><span className="lesson-number">{q.id}</span>{q.title}</Link>)}</div></details>)}</nav><div className="sidebar-bottom"><Link href="/">DSConcepts home ↗</Link><Link href="/journal">Learning journal ↗</Link></div></aside>
-    <main className="learning-main">{storageError && <p className="storage-warning" role="status">Browser storage is unavailable. Query drafts, scratchpad notes, and solved progress may not persist.</p>}
+    <main className="learning-main">{storageError && <p className="storage-warning" role="status">Browser storage is unavailable. Query drafts and solved progress may not persist.</p>}
       {!question ? <div className="sql-overview">
         <section className="sql-hero">
           <span className="eyebrow">DSCONCEPTS · INTERVIEW PRACTICE</span>
@@ -81,7 +100,7 @@ export function SqlPractice({ question }: { question?: SqlQuestion }) {
         </section>
         <div className="sql-overview-how">
           <div><strong>01 · Inspect</strong><p>Read the business definition and explore the table schema and sample rows.</p></div>
-          <div><strong>02 · Query</strong><p>Write your SQL from scratch and run it locally. Keep your reasoning in a private scratchpad.</p></div>
+          <div><strong>02 · Query</strong><p>Write your SQL from scratch and run it locally against the practice data.</p></div>
           <div><strong>03 · Check</strong><p>Compare results against a reference on the visible data and an amount variation—not against query text.</p></div>
         </div>
         {(["basic", "advanced"] as const).map(level => <section className="sql-question-section" key={level}>
@@ -90,8 +109,12 @@ export function SqlPractice({ question }: { question?: SqlQuestion }) {
         </section>)}
         <details className="sql-overview-data"><summary>Explore the Northstar dataset before starting</summary><DataExplorer /></details>
       </div> : <article className="sql-workspace">
-        <section className="sql-question-heading"><div><span className="eyebrow">{question.level.toUpperCase()} · PROBLEM {question.id} OF {sqlQuestions.length}</span><h1>{question.title}</h1><div className="sql-tags">{question.tags.map(tag => <span key={tag}>{tag}</span>)}{solved && <span className="sql-solved-badge">✓ Previously solved</span>}</div></div><Link href="/sql-practice">All problems ↗</Link></section>
-        <section className="sql-prompt"><span className="micro">THE BUSINESS QUESTION</span><p>{question.prompt}</p><div className="sql-output-contract"><strong>Output columns</strong>{question.columns.map(c => <code key={c}>{c}</code>)}</div><p className="sql-order-note">{question.ordered ? "Row order is checked as specified." : "Row order is ignored; duplicate counts still matter."} Column order may differ; use the listed aliases.</p></section>
+        <h1 className="sr-only">{question.title}</h1>
+        <section className="sql-problem-statement" aria-label="Problem statement">
+          <div className="sql-problem-meta"><span className="eyebrow">PROBLEM {question.id} / {sqlQuestions.length} · {question.level.toUpperCase()}</span>{solved && <span className="sql-solved-status">✓ Solved</span>}<Link href="/sql-practice">All problems ↗</Link></div>
+          <p>{question.prompt}</p>
+          <div className="sql-output-contract"><span>Output</span>{question.columns.map(c => <code key={c}>{c}</code>)}</div>
+        </section>
         <div className="sql-workspace-grid"><div className="sql-query-column">
           <section className="sql-code-panel">
             <div className="sql-panel-heading"><span className="sql-file-dot" /><h2>query.sql</h2><span>DuckDB SQL</span></div>
@@ -108,9 +131,8 @@ export function SqlPractice({ question }: { question?: SqlQuestion }) {
           {execution?.feedback && <div className={`sql-feedback ${execution.feedback.correct ? "correct" : "incorrect"}`} role="status"><strong>{execution.feedback.correct ? "That’s a match." : "Not a match yet."}</strong><p>{execution.feedback.message}</p>{!!execution.feedback.missing.length && <details><summary>Missing result rows (sample)</summary><ResultsTable result={{ columns: question.columns, rows: execution.feedback.missing, truncated: false }} label="Missing rows" /></details>}{!!execution.feedback.extra.length && <details><summary>Unexpected result rows (sample)</summary><ResultsTable result={{ columns: question.columns, rows: execution.feedback.extra, truncated: false }} label="Unexpected rows" /></details>}</div>}
           <section className="sql-output-panel">
             <div className="sql-results-tabs"><button aria-pressed={tab === "actual"} onClick={() => setTab("actual")}>Your results</button><button aria-pressed={tab === "expected"} disabled={busy} onClick={() => { if (execution?.expected) setTab("expected"); else void run("expected"); }}>Expected output</button>{execution && <span>{Math.round(execution.milliseconds)} ms</span>}</div>
-            {execution && (tab === "actual" ? execution.result : execution.expected) ? <ResultsTable key={`${tab}-${execution.milliseconds}`} result={(tab === "actual" ? execution.result : execution.expected)!} label={tab === "actual" ? "Query results" : "Expected results"} /> : <div className="sql-results-placeholder"><Database size={24} /><p>Run your query to inspect rows, or check your answer to compare results.</p></div>}
+            {execution && (tab === "actual" ? execution.result : execution.expected) ? <ResultsTable key={`${tab}-${execution.milliseconds}`} result={(tab === "actual" ? execution.result : execution.expected)!} label={tab === "actual" ? "Query results" : "Expected results"} /> : <div className="sql-results-placeholder"><p>Run a query to see results.</p></div>}
           </section>
-          <section className="sql-scratchpad"><div className="sql-panel-heading"><h2>Private scratchpad</h2><span>{storageError ? "Not saved" : "Saved in this browser"}</span></div><label className="sr-only" htmlFor="sql-notes">Scratchpad for {question.title}</label><textarea id="sql-notes" disabled={!ready} value={progress.notes[question.slug] ?? ""} maxLength={10000} placeholder="What is the row grain? Which statuses count? What can duplicate in this join?" onChange={e => update(p => ({ ...p, notes: { ...p.notes, [question.slug]: e.target.value } }))} /></section>
           <section className="sql-help">
             <button className="sql-subtle-button" onClick={() => setHintCount(n => Math.min(n + 1, question.hints.length))} disabled={hintCount === question.hints.length}>Show a hint · {hintCount}/{question.hints.length}</button>
             {question.hints.slice(0, hintCount).map((hint, i) => <p key={hint}><strong>Hint {i + 1}.</strong> {hint}</p>)}
@@ -118,7 +140,6 @@ export function SqlPractice({ question }: { question?: SqlQuestion }) {
           </section>
         </div><div className="sql-context-column">
           <DataExplorer question={question} />
-          <aside className="sql-grading-note"><span className="micro">HOW CHECKING WORKS</span><p>Different SQL can be correct. We check named columns, values, NULLs, and duplicate rows; sorting only matters when requested.</p><p>Check answer also runs an amount-variation fixture. Passing two fixtures is useful feedback, not proof for every possible dataset. Money stays in cents; fractional numeric outputs are compared to 8 decimal places.</p><p>One read-only SELECT or WITH query. No external files, network reads, extensions, or writes. Up to 500 rows and 5 seconds per execution, with a separate 30-second engine startup limit.</p><p>Your drafts and notes stay in this browser. No account, query upload, or AI service.</p></aside>
         </div></div>
         <nav className="sql-problem-navigation" aria-label="Problem navigation"><Link href={prev ? sqlQuestionUrl(prev) : "/sql-practice"}>← {prev ? prev.title : "Practice overview"}</Link><Link href={next ? sqlQuestionUrl(next) : "/sql-practice"}>{next ? next.title : "Back to all problems"} →</Link></nav>
       </article>}

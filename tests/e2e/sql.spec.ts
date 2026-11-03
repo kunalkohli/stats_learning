@@ -32,13 +32,16 @@ test("all 24 reference solutions execute in real DuckDB and pass both fixtures",
   expect(errors).toEqual([]);
 });
 
-test("new problems start blank, saved drafts survive, and clearing requires consent without erasing notes", async ({ page }) => {
+test("new problems start blank, saved drafts survive, and clearing preserves legacy notes", async ({ page }) => {
   await page.goto("/sql-practice/march-first-order-over-100");
   await expect(page.locator(".cm-content")).toHaveText("");
   await expect(page.locator(".sql-solution pre")).toBeHidden();
   await write(page, "SELECT * FROM orders");
-  const notes = page.getByLabel("Scratchpad for First-ever order in March, over $100");
-  await notes.fill("Rank all history before filtering March.");
+  await page.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem("dsconcepts-sql-progress-v1")!);
+    saved.notes["march-first-order-over-100"] = "Rank all history before filtering March.";
+    localStorage.setItem("dsconcepts-sql-progress-v1", JSON.stringify(saved));
+  });
   await page.reload();
   await expect(page.locator(".cm-content")).toHaveText("SELECT * FROM orders");
   page.once("dialog", dialog => dialog.dismiss());
@@ -47,7 +50,7 @@ test("new problems start blank, saved drafts survive, and clearing requires cons
   page.once("dialog", dialog => dialog.accept());
   await page.getByRole("button", { name: "Clear query", exact: true }).click();
   await expect(page.locator(".cm-content")).toHaveText("");
-  await expect(notes).toHaveValue("Rank all history before filtering March.");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("dsconcepts-sql-progress-v1")!).notes["march-first-order-over-100"])).toBe("Rank all history before filtering March.");
   await page.reload();
   await expect(page.locator(".cm-content")).toHaveText("");
   await page.locator(".sql-solution summary").click();
@@ -70,7 +73,7 @@ test("different correct SQL passes; wrong answers, NULL mistakes, aliases, and o
   await expect(page.locator(".sql-feedback.incorrect")).toContainText("Expected columns");
 });
 
-test("expected output and hints are available without awarding solved progress; scratchpad and drafts persist", async ({ page }) => {
+test("expected output and hints do not award solved progress; query drafts persist", async ({ page }) => {
   await page.goto("/sql-practice/missing-email");
   await page.getByRole("button", { name: "Expected output", exact: true }).click();
   await expect(page.getByRole("table", { name: "Expected results", exact: true })).toBeVisible({ timeout: 40000 });
@@ -80,17 +83,43 @@ test("expected output and hints are available without awarding solved progress; 
   await page.getByRole("button", { name: "Show a hint", exact: false }).click();
   await expect(page.locator(".sql-help")).toContainText("NULL is not an empty string");
   await write(page, "SELECT customer_id, customer_name FROM customers WHERE email IS NULL");
-  await page.getByLabel("Scratchpad for Missing customer emails").fill("IS NULL, not = NULL. Preserve the customer grain.");
   await page.getByRole("textbox", { name: "SQL query editor", exact: true }).press("Control+Enter");
   await expect(page.getByRole("table", { name: "Query results", exact: true })).toBeVisible({ timeout: 40000 });
   await expect(page.locator(".sidebar-progress")).toContainText("0 / 24 solved");
   await page.reload();
   await expect(page.locator(".cm-content")).toContainText("WHERE email IS NULL");
-  await expect(page.getByLabel("Scratchpad for Missing customer emails")).toHaveValue("IS NULL, not = NULL. Preserve the customer grain.");
   await page.getByRole("button", { name: "Lab", exact: true }).click();
   await expect(page.locator(".cm-content")).toContainText("WHERE email IS NULL");
   await page.getByRole("button", { name: "Increase text size" }).click();
   await expect(page.locator(".cm-content")).toContainText("WHERE email IS NULL");
+});
+
+test("workspace is focused on the statement and editor; schema views expose details on demand", async ({ page }) => {
+  await page.goto("/sql-practice/monthly-spend-rank");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("March spending ranks with gaps");
+  await expect(page.locator(".sql-problem-statement")).toContainText("Aggregate completed spending per customer");
+  await expect(page.locator(".sql-problem-meta")).toContainText("PROBLEM 15 / 24");
+  await expect(page.locator(".sql-question-heading,.sql-tags,.sql-scratchpad,.sql-grading-note")).toHaveCount(0);
+  await expect(page.getByText("Private scratchpad", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("HOW CHECKING WORKS", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".cm-content")).toHaveText("");
+  await write(page, "SELECT order_id FROM orders");
+  const data = page.getByRole("region", { name: "Data and schema", exact: true });
+  await expect(data.getByRole("button", { name: "Schema", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(data.locator(".sql-columns")).toContainText("order_total_cents");
+  await expect(data.locator('optgroup[label="Used in this problem"] option')).toHaveCount(1);
+  await expect(data.locator(".sql-table-notes")).not.toHaveAttribute("open");
+  await data.getByRole("button", { name: "Sample data", exact: true }).click();
+  await expect(data.getByRole("table", { name: "orders preview", exact: true })).toBeVisible();
+  await expect(data.locator(".sql-sample-data")).toContainText("First 10 of 251 rows");
+  await expect(data.locator(".sql-result-pagination")).toHaveCount(0);
+  await page.getByLabel("Inspect a table").selectOption("payments");
+  await expect(data.getByRole("table", { name: "payments preview", exact: true })).toBeVisible();
+  await data.getByRole("button", { name: "Schema", exact: true }).click();
+  await expect(data.locator(".sql-columns")).toContainText("payment_id");
+  await data.locator(".sql-table-notes summary").click();
+  await expect(data.locator(".sql-table-notes")).toContainText("→ orders.order_id");
+  await expect(page.locator(".cm-content")).toHaveText("SELECT order_id FROM orders");
 });
 
 test("first-ever March cohort rejects filtering the month or amount too early", async ({ page }) => {

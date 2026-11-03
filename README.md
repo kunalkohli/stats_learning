@@ -4,7 +4,7 @@ A local-first learning site built with **Next.js 16, React 19, TypeScript, and h
 
 - **Forecasting:** 31 stops, from uncertainty and seasonality to models and practical workflows.
 - **Experimentation:** 24 stops, following an Amazon-like marketplace testing a new product-page cache. Measure buyer conversion, latency, reliability, and the evidence needed for a safe rollout.
-- **SQL Practice:** 24 interview-prep problems (12 basic, 12 advanced), a syntax-highlighted editor, a private scratchpad, and real browser-local DuckDB execution. Inspect schemas, run queries, compare results, reveal hints, and work through ecommerce/finance cases.
+- **SQL Practice:** 24 interview-prep problems (12 basic, 12 advanced), a focused problem statement, a syntax-highlighted editor, and real browser-local DuckDB execution. Inspect schemas/sample data, run queries, compare results, reveal hints, and work through ecommerce/finance cases.
 - **Two layouts:** use the **Classic / Lab** control in the header. Classic keeps the original spacious graph-paper design; Lab adds a compact rail, part cards, concept-card decks, and **Learn / Explore / Check** modes. The preference persists across journeys. Regression and probability remain planned.
 - **Text size:** top-right **A− / 90% / A+** controls default to **90%**. Adjust in 10-point steps from 70% to 140%; click the percentage to reset to 90%. Your setting persists across pages and both layouts without changing browser zoom or lesson progress.
 
@@ -64,7 +64,7 @@ Northstar Commerce sells products to buyers in the US, GB, and CA. **All transac
 - `payments`: captured payments and failed attempts, potentially on the same order.
 - `refunds`: succeeded/pending requests, including multiple refunds against one payment.
 
-Inspect column types, relationships, and sample rows in the workspace, or download the full reproducible fixture as SQL.
+The compact **Data & schema** panel prioritizes tables used by the current problem. Switch between **Schema** (column names and types) and **Sample data** (first ten rows). Expand **Table notes & relationships** for business definitions, foreign-key relationships, and status meanings. Download the full fixture as SQL from the panel footer. On desktop, the panel stays alongside the editor while scrolling.
 
 ### Problems
 
@@ -75,11 +75,11 @@ Inspect column types, relationships, and sample rows in the workspace, or downlo
 ### Editor and checking
 
 - CodeMirror provides syntax highlighting, line numbers, schema-aware completion, and **Cmd/Ctrl+Enter** to run. A plain-text editor remains available if enhancement fails.
-- New problems start with a **blank editor**, so you write the query yourself. Returning to a problem restores only your own saved draft. **Clear query** asks before removing a nonempty draft, leaves your scratchpad untouched, and stays blank after reload. Hints and solution loading are opt-in; SQL is never filled automatically.
+- New problems start with a **blank editor**, so you write the query yourself. Returning to a problem restores only your own saved draft. **Clear query** asks before removing a nonempty draft and stays blank after reload. Hints and solution loading are opt-in; SQL is never filled automatically.
 - **Run query** executes your SQL; it never marks a problem solved. **Expected output** lets you inspect the target without awarding progress.
 - **Check answer** compares named columns and typed result values with the reference, not SQL text. Column order and alias case may differ. Row order is ignored unless the question requires sorting. NULL differs from the text `NULL`, and duplicate row counts matter. Fractional numbers are normalized to eight decimal places; monetary answers stay in cents.
 - A correct visible result is also checked against a deterministic amount-variation fixture. This catches some hardcoded outputs and threshold errors, but passing two fixtures is **not proof of correctness on every possible dataset**.
-- Hints are progressive; solutions/explanations are revealed only on request. Each problem saves its query draft, private reasoning notes, and successful checks in this browser under `dsconcepts-sql-progress-v1`. Existing `statsconcepts-*` keys intentionally remain unchanged for backwards compatibility.
+- Hints are progressive; solutions/explanations are revealed only on request. Each problem saves its query draft and successful checks in this browser under `dsconcepts-sql-progress-v1`. The workspace intentionally omits a large heading card, topic tags, scratchpad, and checking explainer to keep attention on the statement, query, results, and data. Previously saved scratchpad notes are preserved in storage, not displayed or deleted. Existing `statsconcepts-*` keys intentionally remain unchanged for backwards compatibility.
 
 ### Execution limits and dialect
 
@@ -126,7 +126,7 @@ DuckDB worker/WASM assets are copied from npm during development/build. Its MIT 
 | `src/lib/sql/data.ts` | Reproducible Northstar tables, schema, and two fixtures |
 | `src/lib/sql/runner.ts` | Browser-local DuckDB worker lifecycle, limits, and result conversion |
 | `src/lib/sql/checker.ts` | Read-only statement guard and result comparison |
-| `src/lib/sql/progress.ts` | Independent query/scratchpad/solved-state normalization |
+| `src/lib/sql/progress.ts` | Independent draft/solved-state normalization; preserves legacy notes |
 | `src/components/sql/` | Practice workspace, CodeMirror editor, schema explorer, and result tables |
 | `src/app/sql-practice/` | Overview and 24 statically generated problem routes |
 | `src/app/sql-practice.css` | Practice layout and responsive navigation |
