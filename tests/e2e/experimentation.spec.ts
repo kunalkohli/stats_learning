@@ -28,10 +28,9 @@ test("layout choice persists across journeys and the card deck, modes, and reset
   await page.goto("/experimentation/why-randomize");
   await page.getByRole("button", { name: "Lab", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-layout", "lab");
-  await expect(page.locator(".reading-deck")).toContainText("The setup");
-  await expect(page.locator(".reading-deck")).toContainText("The counterfactual is missing");
-  await page.locator(".deck-next").click();
-  await expect(page.locator(".reading-deck")).toContainText("Random assignment makes a fair starting point");
+  await expect(page.locator(".learning-cards")).toContainText("The big idea");
+  await expect(page.locator(".learning-cards")).toContainText("The counterfactual is missing");
+  await expect(page.locator(".learning-cards")).toContainText("Random assignment makes a fair starting point");
   await page.getByRole("button", { name: "02 · Explore" }).click();
   await page.getByRole("button", { name: "Random assignment", exact: true }).click();
   await expect(page.getByRole("button", { name: "Random assignment", exact: true })).toHaveAttribute("aria-pressed", "true");
@@ -45,7 +44,7 @@ test("layout choice persists across journeys and the card deck, modes, and reset
   await page.getByRole("link", { name: "Forecasting", exact: true }).first().click();
   await expect(page.locator(".journey-part-card")).toHaveCount(6);
   await page.goto("/forecasting/arima");
-  await expect(page.locator(".reading-deck")).toBeVisible();
+  await expect(page.locator(".learning-cards")).toBeVisible();
   await page.getByRole("button", { name: "02 · Explore" }).click();
   await expect(page.getByRole("slider", { name: "AR coefficient φ" })).toBeVisible();
   await page.reload();
@@ -131,5 +130,5 @@ test("unknown experiment routes 404 and blocked preference storage remains usabl
   await page.goto("/experimentation/why-randomize");
   await expect(page.getByRole("status")).toContainText("storage is unavailable");
   await page.getByRole("button", { name: "Lab", exact: true }).click();
-  await expect(page.locator(".reading-deck")).toBeVisible();
+  await expect(page.locator(".learning-cards")).toBeVisible();
 });

@@ -117,7 +117,7 @@ export function Forecasting({ lesson }: { lesson?: Lesson }) {
       {storageError && <p className="storage-warning" role="status">Browser storage is unavailable. Your work may not persist after you leave this page.</p>}
       {!lesson ? <ForecastIntro progress={progress} /> : <article className="reference-lesson" style={{ "--part-color": parts[lesson.part].color } as React.CSSProperties}>
         {layout !== "lab" && title}
-        {layout === "lab" ? <FocusLesson title={title} idea={lesson} teaching={teaching} guide={forecastGuide(lesson.lab)} lab={<Lab key={labKey} lesson={lesson} />} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={<ResetLabButton onClick={() => setLabKey(k => k + 1)} />} /> : <div className="lesson-content-panel">
+        {layout === "lab" ? <FocusLesson title={title} idea={lesson} teaching={teaching} guide={forecastGuide(lesson.lab, lesson.slug)} lab={<Lab key={labKey} lesson={lesson} />} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={<ResetLabButton onClick={() => setLabKey(k => k + 1)} />} /> : <div className="lesson-content-panel">
           <p className="lesson-intro">{lesson.intro}</p>
           {teaching?.caseStudy && <LessonCase study={teaching.caseStudy} />}
           <LessonConceptTables teaching={teaching!} />
@@ -128,7 +128,7 @@ export function Forecasting({ lesson }: { lesson?: Lesson }) {
           {quiz}{notebook}{reading}{nextLink}
         </div>}
       </article>}
-      <footer className="learning-footer"><span>DSConcepts · one concept at a time.</span><a href="/journal">Learning journal ↗</a></footer>
+      <footer className="learning-footer"><span>DSConcepts · simulated learning examples.</span><a href="/journal">Learning journal ↗</a></footer>
     </main>
   </div>;
 }

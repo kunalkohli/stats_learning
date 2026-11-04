@@ -138,11 +138,11 @@ export function driverExperiment(driverError: number) {
   const orders = visitors.map((v, i) => 20 + 10 * v + noise[i + 40] * 9), cut = 120;
   const coefficients = leastSquares(visitors.slice(0, cut).map(v => [1, v]), orders.slice(0, cut));
   // Supplied synthetic driver forecasts with controlled errors, not learned future observations.
-  const supplied = visitors.slice(cut).map((v, i) => v + driverError * noise[i + 6]);
+  const supplied = visitors.slice(cut).map((v, i) => Math.max(1, v + driverError * noise[i + 6]));
   const honest = supplied.map(v => coefficients[0] + coefficients[1] * v), leaky = visitors.slice(cut).map(v => coefficients[0] + coefficients[1] * v);
   const actual = orders.slice(cut), sigma = Math.sqrt(orders.slice(0, cut).reduce((s, v, i) => s + (v - coefficients[0] - coefficients[1] * visitors[i]) ** 2, 0) / (cut - 2));
   const mae = (predicted: number[]) => actual.reduce((s, v, i) => s + Math.abs(v - predicted[i]), 0) / actual.length;
-  return { visitors, orders, honest, leaky, actual, honestMae: mae(honest), leakyMae: mae(leaky), slope: coefficients[1], residualSigma: sigma, halfWidth: 1.281552 * Math.sqrt(sigma ** 2 + coefficients[1] ** 2 * driverError ** 2) };
+  return { visitors, orders, honest, leaky, actual, honestMae: mae(honest), leakyMae: mae(leaky), intercept: coefficients[0], slope: coefficients[1], residualSigma: sigma, halfWidth: 1.281552 * Math.sqrt(sigma ** 2 + coefficients[1] ** 2 * driverError ** 2) };
 }
 
 function normalProbability(z: number) {

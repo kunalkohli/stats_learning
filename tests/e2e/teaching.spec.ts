@@ -30,8 +30,8 @@ test("first forecast lesson explains Northstar's use case in both layouts", asyn
   await expect(page.locator(".lesson-table tbody tr")).toHaveCount(3);
   await page.getByRole("button", { name: "Lab", exact: true }).click();
   await expect(useCase).toBeVisible();
-  await expect(page.locator(".reading-example")).toHaveCount(2);
-  await expect(page.locator(".reading-example").first()).toContainText("$32,000");
+  await expect(page.locator(".learning-card").nth(1)).toContainText("$32,000");
+  await expect(page.locator(".learning-remember")).toContainText("Remember this");
   await page.getByRole("button", { name: "02 · Explore", exact: true }).click();
   await expect(page.getByRole("slider", { name: "How far ahead" })).toBeVisible();
   await page.getByRole("button", { name: "03 · Check", exact: true }).click();
@@ -49,7 +49,7 @@ test("tables remain readable on mobile and at 140% without changing progress or 
     for (const path of ["/forecasting/forecast-is-a-range", "/forecasting/trend-seasonality-noise", "/forecasting/trend-or-seasonality", "/experimentation/why-randomize"]) {
       await page.goto(path);
       if (layout === "Classic") await expect(page.locator(".lesson-table").first()).toBeVisible();
-      else await expect(page.locator(".reading-example").first()).toBeVisible();
+      else await expect(page.locator(".learning-card").first()).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${layout} ${path}`).toBe(true);
       await expect(page.getByRole("button", { name: "Mark as understood", exact: true })).toHaveAttribute("aria-pressed", "false");
     }
