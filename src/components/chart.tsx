@@ -1,11 +1,12 @@
 "use client";
 
-export type Series = { name: string; values: (number | null)[]; color: string; dashed?: boolean; fill?: boolean };
+export type Series = { name: string; values: (number | null)[]; color: string; dashed?: boolean; fill?: boolean; legend?: boolean };
 export type Band = { low: number[]; high: number[]; color: string };
 
-export function Chart({ series, labels = [], bands = [], height = 280, money = true, marker, title = "Interactive time series chart", domain }: {
+export function Chart({ series, labels = [], bands = [], height = 280, money = true, marker, title = "Interactive time series chart", domain, regions = [] }: {
   series: Series[]; labels?: { at: number; text: string }[]; bands?: Band[]; height?: number; money?: boolean;
   marker?: { at: number; text: string }; title?: string; domain?: [number, number];
+  regions?: { from: number; to: number; color: string; label: string }[];
 }) {
   const width = 800, left = 58, right = 20, top = 26, bottom = 36;
   const all = [...series.flatMap(s => s.values.filter((v): v is number => v !== null)), ...bands.flatMap(b => [...b.low, ...b.high])];
@@ -21,14 +22,15 @@ export function Chart({ series, labels = [], bands = [], height = 280, money = t
   };
   return <div className="chart-wrap">
     <svg role="img" aria-label={title} viewBox={`0 0 ${width} ${height}`} className="chart">
-      <title>{title}</title>
+       <title>{title}</title>
+       {regions.map(region => <g key={region.label}><rect x={x(region.from)} y={top} width={Math.max(0, x(region.to) - x(region.from))} height={height - top - bottom} fill={region.color} /><text x={x(region.from) + 5} y={top + 13}>{region.label}</text></g>)}
       {[0, 1, 2, 3].map(i => { const n = min + (max - min) * i / 3; return <g key={i}><line x1={left} x2={width - right} y1={y(n)} y2={y(n)} stroke="var(--line)" strokeDasharray="2 4" /><text x={left - 12} y={y(n) + 4} textAnchor="end">{money ? `${n < 0 ? "−" : ""}$${(Math.abs(n) / 1000).toFixed(0)}k` : n.toFixed(1)}</text></g>; })}
       {bands.map((b, i) => <path key={i} d={`${path(b.high)} ${b.low.map((v, j) => ({ v, j })).reverse().map(({ v, j }) => `L${x(j)},${y(v)}`).join(" ")} Z`} fill={b.color} />)}
       {marker && <g><line x1={x(marker.at)} x2={x(marker.at)} y1={top} y2={height - bottom} stroke="var(--muted)" strokeDasharray="4 4" /><text x={x(marker.at) - 7} y={16} textAnchor="end">{marker.text}</text></g>}
       {series.map(s => <path key={s.name} d={path(s.values)} fill="none" stroke={s.color} strokeWidth={s.name === "Observed sales" ? 1.5 : 2.3} strokeLinejoin="round" strokeLinecap="round" strokeDasharray={s.dashed ? "5 5" : undefined} />)}
       {labels.map(l => <text key={`${l.at}-${l.text}`} x={x(l.at)} y={height - 10} textAnchor="middle">{l.text}</text>)}
     </svg>
-    <div className="chart-legend">{series.map(s => <span key={s.name}><i style={{ background: s.color }} />{s.name}</span>)}{bands.length > 0 && <span><i style={{ background: "#b8c995" }} />Prediction intervals</span>}</div>
+    <div className="chart-legend">{series.filter(s => s.legend !== false).map(s => <span key={s.name}><i style={{ background: s.color }} />{s.name}</span>)}{bands.length > 0 && <span><i style={{ background: "#b8c995" }} />Prediction intervals</span>}</div>
   </div>;
 }
 

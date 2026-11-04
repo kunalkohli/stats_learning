@@ -24,3 +24,13 @@ const experimentGuides: Record<ExperimentLab, LabGuide> = {
 };
 
 export const experimentGuide = (lab: ExperimentLab): LabGuide => experimentGuides[lab];
+
+const forecastGuides: Record<string, LabGuide> = {
+  history: { title: "Give the forecasting rule more history.", steps: ["Start with three months. The fitted trend mistakes Northstar's holiday ramp for continuing acceleration.", "Choose Almost 3 years. The fitted trend/month model now learns recurring seasonality from past cycles.", "Reveal the future. The red three-month reference stays deliberately unchanged; the green fitted forecast uses your selected history."] },
+  backtest: { title: "Move the origin, then score unseen outcomes.", steps: ["Press Play or use Next origin. Each step pretends Northstar has reached a new month.", "The model refits using only the training prefix and forecasts 1, 2, and 3 months ahead.", "Compare the pooled errors by horizon. They are computed from actual held-out misses, not forced to rise.", "Switch to Single holdout: one origin gives much less evidence than a rolling evaluation."] },
+  acf: { title: "Correlate sales with their own past.", steps: ["On Trend + weekly, compare lags 6, 7, and 8. Trend can make all three look strongly related.", "Turn on Difference first. Inspect whether lag 7 now stands out against nearby lags.", "Try White noise. A sample can have small spikes by chance; compare the real one-step holdout scores too."] },
+  residual: { title: "Inspect what the model leaves behind.", steps: ["Trend · ignores weekdays should leave weekly structure in Northstar's errors.", "Compare Trend + weekdays and inspect both the correlation plot and the bias.", "Choose the biased +5 version. Its centered ACF barely changes, but the predictions are systematically too high."] },
+  growth: { title: "Average the noise, not a changing pattern.", steps: ["On Accelerating, compare Average all, Last 3 months, and Latest month using the earlier-month backtest.", "Switch to Stable but noisy. Averaging can now cancel random variation instead of lagging a rising rate.", "Reveal November only after choosing a rule. That outcome never enters the rate selection."] },
+  metrics: { title: "Separate accuracy from direction.", steps: ["Set noise to zero and add a 10% under-forecast. Bias is positive under actual minus forecast.", "Add zero-mean noise: absolute-error scores grow without automatically changing the mean bias.", "Try One huge miss and then Closed for a month. RMSE emphasizes extremes; MAPE becomes undefined at zero."] },
+};
+export const forecastGuide = (lab: string): LabGuide | undefined => forecastGuides[lab];

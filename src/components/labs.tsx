@@ -7,6 +7,8 @@ import { blackFriday, generateSales, metrics, money, movingAverage } from "@/lib
 import type { Lesson } from "@/lib/curriculum";
 import { WorkflowLab } from "./workflow-lab";
 import { MstlLab, ModelComparisonLab } from "./seasonal-model-labs";
+import { HistoryForecastLab, RollingBacktestLab, AutocorrelationLab, ResidualNoiseLab, GrowthChoiceLab, ErrorMetricsLab } from "./forecast-diagnostic-labs";
+import { baselineForecast, type BaselineMethod } from "@/lib/forecast-playgrounds";
 
 const ink = "#273d32", green = "#65845c", orange = "#c07a53", blue = "#728cae", purple = "#9a86ad";
 const dates = [{ at: 0, text: "Jan ’23" }, { at: 181, text: "Jul ’23" }, { at: 365, text: "Jan ’24" }, { at: 547, text: "Jul ’24" }, { at: 731, text: "Jan ’25" }, { at: 912, text: "Jul ’25" }, { at: 1095, text: "Dec ’25" }];
@@ -26,15 +28,15 @@ export function Lab({ lesson }: { lesson: Lesson }) {
     switch (lesson.lab) {
       case "range": return <RangeLab />;
       case "components": return <ComponentsLab />;
-      case "history": return <HistoryLab />;
+      case "history": return <HistoryForecastLab />;
       case "decomposition": return <DecompositionLab />;
       case "baseline": return <BaselineLab />;
-      case "growth": return <GrowthLab />;
-      case "backtest": return <BacktestLab />;
-      case "metrics": return <MetricsLab />;
-      case "acf": return <ArLab acfOnly />;
+      case "growth": return <GrowthChoiceLab />;
+      case "backtest": return <RollingBacktestLab />;
+      case "metrics": return <ErrorMetricsLab />;
+      case "acf": return <AutocorrelationLab />;
       case "ar": return <ArLab />;
-      case "residual": return <ResidualLab />;
+      case "residual": return <ResidualNoiseLab />;
       case "stationary": return <StationaryLab />;
       case "base": return <BaseLab />;
       case "smoothing": return <SmoothingLab id={lesson.id} />;
@@ -49,7 +51,8 @@ export function Lab({ lesson }: { lesson: Lesson }) {
       case "model-comparison": return <ModelComparisonLab />;
     }
   };
-  return <section className="lab"><div className="lab-heading"><span className="figure-label">{lesson.lab === "model-comparison" ? "TABLE" : "FIG"} {String(lesson.id).padStart(2, "0")}.1</span><h3>{titles[lesson.lab]}</h3><span className="live-indicator"><i /> PLAYGROUND</span></div>{content()}<div className="simulation-label">{lesson.lab === "workflow" || lesson.lab === "model-comparison" ? "Decision guide · validate every candidate on your own use case" : "Simulated teaching example · not a fitted production model"}</div></section>;
+  const specificNotes = ["history", "growth", "backtest", "metrics", "acf", "residual"].includes(lesson.lab);
+  return <section className="lab"><div className="lab-heading"><span className="figure-label">{lesson.lab === "model-comparison" ? "TABLE" : "FIG"} {String(lesson.id).padStart(2, "0")}.1</span><h3>{titles[lesson.lab]}</h3></div>{content()}{!specificNotes && <details className="lab-fine-print"><summary>Fine print & assumptions</summary><p>{lesson.lab === "workflow" || lesson.lab === "model-comparison" ? "Decision guide: validate each candidate on the actual business decision and future-data tests." : "Constructed teaching data and illustrative calculations, not a production forecasting service. Read the diagram's method notes and distinguish supplied simulator components from fitted estimates."}</p></details>}</section>;
 }
 
 function RangeLab() {
@@ -102,18 +105,13 @@ function DecompositionLab() {
 }
 
 function BaselineLab() {
-  const [method, setMethod] = useState("weekly");
+  const [method, setMethod] = useState<BaselineMethod>("weekly");
   const data = useMemo(() => generateSales(), []), cut = 1000, count = 56;
   const actual = data.slice(cut - 56, cut + count).map(d => d.sales);
-  const forecast = Array.from({ length: 112 }, (_, j) => {
-    if (j < 55) return null;
-    const i = cut - 56 + j;
-    if (method === "naive") return data[cut - 1].sales;
-    if (method === "weekly") return data[cut - 7 + ((i - cut + 7) % 7)].sales;
-    return data[i - 364].sales * (method === "growth" ? 1.18 : 1);
-  });
+  const predicted = baselineForecast(data.slice(0, cut).map(d => d.sales), count, method);
+  const forecast = [...Array(55).fill(null), data[cut - 1].sales, ...predicted];
   const score = metrics(actual.slice(56), forecast.slice(56) as number[]);
-  return <><Segments label="Baseline method" value={method} onChange={setMethod} values={[{ value: "naive", label: "Last value" }, { value: "weekly", label: "Last week" }, { value: "yearly", label: "364-day lag" }, { value: "growth", label: "364-day lag × 1.18" }]} />
+  return <><Segments<BaselineMethod> label="Baseline method" value={method} onChange={setMethod} values={[{ value: "mean", label: "Mean" }, { value: "naive", label: "Last value" }, { value: "weekly", label: "Last week" }, { value: "yearly", label: "364-day lag" }, { value: "drift", label: "Drift" }, { value: "growth", label: "364-day lag × 1.18" }]} />
     <Chart series={[{ name: "Actual sales", values: actual, color: ink }, { name: "Baseline forecast", values: forecast, color: orange, dashed: true }]} marker={{ at: 55, text: "Training ends" }} labels={[{ at: 0, text: "History" }, { at: 55, text: "Forecast origin" }, { at: 111, text: "+56 days" }]} />
     <Stats items={[["Holdout MAE", money(score.mae)], ["Holdout RMSE", money(score.rmse)]]} /><Hint>All baseline inputs come from before the forecast origin. The 18% growth factor is a supplied scenario assumption, not learned from holdout sales. This window illustrates ordinary-day performance; test event windows separately.</Hint></>;
 }
