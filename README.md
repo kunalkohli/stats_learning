@@ -5,9 +5,10 @@ A local-first learning site built with **Next.js 16, React 19, TypeScript, and h
 - **Forecasting:** 31 stops, from uncertainty and seasonality to models and practical workflows.
 - **Experimentation:** 24 stops, following an Amazon-like marketplace testing a new product-page cache. Measure buyer conversion, latency, reliability, and the evidence needed for a safe rollout.
 - **SQL Practice:** 24 interview-prep problems (12 basic, 12 advanced), a focused problem statement, a syntax-highlighted editor, and real browser-local DuckDB execution. Inspect schemas/sample data, run queries, compare results, reveal hints, and work through ecommerce/finance cases.
-- **Two layouts:** use the **Classic / Lab** control in the header. Classic keeps the original spacious graph-paper design; Lab adds a compact rail, part cards, concept-card decks, and **Learn / Explore / Check** modes. The preference persists across journeys. Regression and probability remain planned.
+- **Two layouts:** use the **Classic / Lab** control in the header. Classic keeps the original spacious graph-paper design; Lab adds a compact rail, part cards, focused concept cards, and **Learn / Explore / Check** modes. The preference persists across journeys. Regression and probability remain planned.
 - **Structured explanations:** Classic lesson bullets are now emoji-led tables: **concept/component → what it means → Northstar example**. All forecasting and experimentation lessons have authored business examples. The components lesson distinguishes trend, seasonality, cycle, and remainder, with a separate additive/multiplicative comparison.
-- **Fuller Learn panels:** Lab groups two or three ideas per reading page, with the same Northstar examples alongside the explanations. Panels use the available width and stack on narrow screens or enlarged text. Six former cards become two pages; formulas and takeaways stay intact. The expanded first forecast lesson includes a structured Northstar planning use case in both layouts.
+- **Focused Learn cards:** Lab lays short cards on one scrollable page instead of a paginated deck. Each card carries one or two ideas, with sections such as **The big idea**, **Why it matters**, **How it works**, **Remember this**, and compact concept/meaning/Northstar tables. Formulas and takeaways stay intact, and the cards stack cleanly on narrow screens or at 140% text. The expanded first forecast lesson includes a structured Northstar planning use case in both layouts.
+- **Lesson-specific forecast labs:** history-window fitting, animated rolling backtests, lag scatterplots with ACF bars, biased residual diagnostics, growth-rate and six-metric error experiments, hierarchy reconciliation, driver leakage, interval coverage, staged Holt–Winters, Fourier wave fitting, and DHR residual correction. Each lab states what is computed, what is supplied, and what is only illustrative.
 - **Text size:** top-right **A− / 90% / A+** controls default to **90%**. Adjust in 10-point steps from 70% to 140%; click the percentage to reset to 90%. Your setting persists across pages and both layouts without changing browser zoom or lesson progress.
 
 **Agent onboarding:** Read [education/CONTEXT.md](education/CONTEXT.md) for implementation history, user preferences, architecture, curriculum, storage migrations, and development/testing guidance.
@@ -45,7 +46,7 @@ npm start
 
 ## Important limitations
 
-The playgrounds teach concepts; they do **not** fit full ARIMA, ETS, STL, Prophet, or ML models. Diagrams clearly identify simulated data, supplied coefficients, and oracle components. Baseline error scores are calculated from a chronological simulated holdout. Future inputs are not used as baseline predictors. Prediction bands are illustrative, not empirically calibrated for an ecommerce business.
+The playgrounds teach concepts; they do **not** fit full production ARIMA, ETS, STL, Prophet, or ML models. Some labs implement deliberately small teaching algorithms—SES/Holt–Winters recursions, OLS and Fourier regression, a single AR(1) error correction, rolling refits—with fixed or supplied parameters. They are not tuned or validated forecasting services. Diagrams clearly identify simulated data, supplied coefficients, and oracle components. Baseline error scores are calculated from a chronological simulated holdout. Future inputs are not used as predictors. Prediction bands are illustrative unless a lab explicitly computes coverage, and none are calibrated Northstar business intervals.
 
 Notes and progress stay in this browser’s local storage. Export before clearing site data or changing browsers/devices. Classic uses the graph-paper palette in `../profile.html` and local system fonts. Lab uses rounded **Nunito**, bundled in `public/fonts/` under the SIL Open Font License, stronger ink borders, dotted paper, numbered navigation, and guided steps. No external font requests are made at runtime.
 
@@ -102,8 +103,12 @@ DuckDB worker/WASM assets are copied from npm during development/build. Its MIT 
 | `src/lib/model-comparison.ts` | Comparison table and use-case guidance |
 | `src/lib/progress.ts` | Saved-progress normalization and migration after lesson insertion |
 | `src/lib/forecast.ts` | Reproducible sales simulation, holiday calendar, metrics |
-| `src/components/labs.tsx` | Interactive teaching playgrounds |
+| `src/components/labs.tsx` | Interactive teaching playgrounds and lab router |
+| `src/components/forecast-diagnostic-labs.tsx` | Focused forecasting labs: history, backtest, ACF, residuals, growth, metrics, hierarchy, drivers, intervals, Holt–Winters, Fourier, DHR |
+| `src/lib/forecast-playgrounds.ts` | Reproducible fitting, backtests, diagnostics, and simulation helpers |
 | `src/components/chart.tsx` | SVG time-series and ACF charts |
+| `src/components/lesson-teaching.tsx` | Emoji-led teaching tables, baseline comparison, Remember this |
+| `src/app/focused-learning.css` | Focused-card and diagnostic-lab styling |
 | `src/components/site.tsx` | Homepage, route map, lessons, journal |
 | `src/components/home.tsx` | Reference-style homepage and concept library |
 | `src/components/chrome.tsx` | DSConcepts branding, header, and sketches |

@@ -150,6 +150,113 @@ function normalProbability(z: number) {
   const tail = Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI) * t * (.319381530 + t * (-.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
   return z >= 0 ? 1 - tail : tail;
 }
+export const FOURIER_PERIOD = 52;
+export function fourierTruth(period = FOURIER_PERIOD) {
+  return Array.from({ length: period }, (_, t) => 100000
+    + 16000 * Math.sin(2 * Math.PI * t / period - .5)
+    + 7000 * Math.sin(4 * Math.PI * t / period + .4)
+    + 3500 * Math.sin(6 * Math.PI * t / period + 1.2)
+    + 1500 * Math.sin(8 * Math.PI * t / period + .9));
+}
+function fourierRow(t: number, k: number, period: number) {
+  return [1, ...Array.from({ length: k }, (_, j) => [Math.sin(2 * Math.PI * (j + 1) * t / period), Math.cos(2 * Math.PI * (j + 1) * t / period)]).flat()];
+}
+const rmse = (actual: number[], fitted: number[]) => Math.sqrt(actual.reduce((s, v, i) => s + (v - fitted[i]) ** 2, 0) / actual.length);
+export function fourierFit(values: number[], k: number, period = FOURIER_PERIOD) {
+  if (!values.length || !Number.isInteger(k) || k < 1 || k > Math.floor((period - 1) / 2)) throw new Error("Invalid Fourier fit parameters.");
+  const design = values.map((_, t) => fourierRow(t % period, k, period));
+  const coefficients = leastSquares(design, values);
+  const fitted = design.map(row => row.reduce((s, v, j) => s + v * coefficients[j], 0));
+  const mean = values.reduce((s, v) => s + v, 0) / values.length;
+  const sse = values.reduce((s, v, i) => s + (v - fitted[i]) ** 2, 0);
+  const sst = values.reduce((s, v) => s + (v - mean) ** 2, 0);
+  return { coefficients, fitted, rmse: Math.sqrt(sse / values.length), r2: sst ? 1 - sse / sst : 1 };
+}
+export function fourierPredict(coefficients: number[], t: number, k: number, period = FOURIER_PERIOD) {
+  return fourierRow(t % period, k, period).reduce((s, v, j) => s + v * coefficients[j], 0);
+}
+export function fourierShape(years = 3, k = 3) {
+  const truth = fourierTruth(), noise = randomNormals(years * FOURIER_PERIOD, 6101).map(v => v * 4500);
+  const observedAverage = truth.map((v, w) => v + Array.from({ length: years }, (_, y) => noise[y * FOURIER_PERIOD + w]).reduce((s, n) => s + n, 0) / years);
+  const fit = fourierFit(observedAverage, k), fitted = fit.fitted;
+  const components = Array.from({ length: k }, (_, j) => truth.map((_, t) => {
+    const a = fit.coefficients[1 + j * 2], b = fit.coefficients[2 + j * 2];
+    return a * Math.sin(2 * Math.PI * (j + 1) * t / FOURIER_PERIOD) + b * Math.cos(2 * Math.PI * (j + 1) * t / FOURIER_PERIOD);
+  }));
+  const sse = truth.reduce((s, v, i) => s + (v - fitted[i]) ** 2, 0), mean = truth.reduce((s, v) => s + v, 0) / truth.length;
+  const sst = truth.reduce((s, v) => s + (v - mean) ** 2, 0);
+  return { truth, observedAverage, fitted, components, rmse: Math.sqrt(sse / truth.length), r2: sst ? 1 - sse / sst : 1 };
+}
+export function fourierHistory(years: number, k: number) {
+  if (!Number.isInteger(years) || years < 1 || years > 5) throw new Error("History must be 1 to 5 years.");
+  const truth = fourierTruth(), noise = randomNormals(years * FOURIER_PERIOD, 6101).map(v => v * 4500);
+  const observed = Array.from({ length: years * FOURIER_PERIOD }, (_, t) => truth[t % FOURIER_PERIOD] + noise[t]);
+  const fit = fourierFit(observed, k), fitted = fit.fitted;
+  const nextYear = Array.from({ length: FOURIER_PERIOD }, (_, t) => fourierPredict(fit.coefficients, t, k));
+  return { observed, fitted, truth, nextYearFit: nextYear, inSampleRmse: rmse(observed, fitted), nextYearRmse: rmse(truth, nextYear) };
+}
+
+export type HwMode = "additive" | "multiplicative";
+export type HwStage = 1 | 2 | 3;
+const HW_PERIOD = 7;
+const hwAdditive = [-900, -500, 0, 250, 600, 1300, 500];
+const hwMultiplicative = [.91, .95, 1, 1.025, 1.05, 1.13, 1.05];
+const hwTruth = (t: number, mode: HwMode) => {
+  const level = 10000 + 120 * t;
+  return mode === "additive" ? level + hwAdditive[t % HW_PERIOD] : level * hwMultiplicative[t % HW_PERIOD];
+};
+export function holtWinters(mode: HwMode, stage: HwStage, alpha: number) {
+  if (alpha <= 0 || alpha >= 1) throw new Error("Alpha must be between zero and one.");
+  const n = 84, trainN = 70, beta = stage >= 2 ? .08 : 0, gamma = stage >= 3 ? .25 : 0;
+  const noise = randomNormals(n, 5521).map(v => v * 130);
+  const observed = Array.from({ length: n }, (_, t) => hwTruth(t, mode) + noise[t]);
+  const mean = (from: number, to: number) => observed.slice(from, to).reduce((s, v) => s + v, 0) / (to - from);
+  let level = mean(0, HW_PERIOD), trend = stage >= 2 ? (mean(HW_PERIOD, HW_PERIOD * 2) - mean(0, HW_PERIOD)) / HW_PERIOD : 0;
+  const seasonal = mode === "additive" ? observed.slice(0, HW_PERIOD).map(v => v - level) : observed.slice(0, HW_PERIOD).map(v => v / level);
+  if (stage < 3) seasonal.fill(mode === "additive" ? 0 : 1);
+  const fitted: (number | null)[] = Array(n).fill(null), levels: (number | null)[] = Array(n).fill(null), trends: (number | null)[] = Array(n).fill(null);
+  for (let t = HW_PERIOD; t < trainN; t++) {
+    const s = seasonal[t % HW_PERIOD];
+    fitted[t] = mode === "additive" ? level + trend + s : (level + trend) * s;
+    const previousLevel = level;
+    if (mode === "additive") {
+      level = alpha * (observed[t] - s) + (1 - alpha) * (level + trend);
+      trend = beta * (level - previousLevel) + (1 - beta) * trend;
+      seasonal[t % HW_PERIOD] = gamma * (observed[t] - level) + (1 - gamma) * s;
+    } else {
+      level = alpha * (observed[t] / s) + (1 - alpha) * (level + trend);
+      trend = beta * (level - previousLevel) + (1 - beta) * trend;
+      seasonal[t % HW_PERIOD] = gamma * (observed[t] / level) + (1 - gamma) * s;
+    }
+    levels[t] = level; trends[t] = trend;
+  }
+  const forecast = Array.from({ length: 14 }, (_, h) => {
+    const s = seasonal[(trainN + h) % HW_PERIOD];
+    return mode === "additive" ? level + (h + 1) * trend + s : (level + (h + 1) * trend) * s;
+  });
+  const holdout = observed.slice(trainN);
+  const mae = holdout.reduce((s, v, i) => s + Math.abs(v - forecast[i]), 0) / holdout.length;
+  const amplitude = Math.max(...seasonal) - Math.min(...seasonal);
+  return { observed, fitted, forecast, holdout, levels, trends, seasonal: [...seasonal], mae, amplitude: mode === "additive" ? amplitude : amplitude * 100, trend, level };
+}
+
+export function dhrExperiment() {
+  const n = 730, horizon = 90, period = 365, k = 3;
+  const seasonal = (t: number) => 100000 + 12000 * Math.sin(2 * Math.PI * t / period - .6) + 6000 * Math.cos(4 * Math.PI * t / period + .3) + 3000 * Math.sin(6 * Math.PI * t / period + 1.1);
+  const noise = randomNormals(n + horizon, 16988).map(v => v * 2200);
+  let error = 0; const errors = noise.map(v => error = .85 * error + v);
+  const observed = Array.from({ length: n + horizon }, (_, t) => seasonal(t) + errors[t]);
+  const training = observed.slice(0, n), fit = fourierFit(training, k, period), residuals = training.map((v, i) => v - fit.fitted[i]);
+  const denominator = residuals.slice(0, -1).reduce((s, v) => s + v * v, 0);
+  const rho = denominator ? residuals.slice(1).reduce((s, v, i) => s + v * residuals[i], 0) / denominator : 0;
+  const regressionForecast = Array.from({ length: horizon }, (_, h) => fourierPredict(fit.coefficients, n + h, k, period));
+  const arForecast = regressionForecast.map((v, h) => v + rho ** (h + 1) * residuals[n - 1]);
+  const actual = observed.slice(n);
+  const mae = (forecast: number[]) => actual.reduce((s, v, i) => s + Math.abs(v - forecast[i]), 0) / actual.length;
+  const corrected = residuals.slice(1).map((v, i) => v - rho * residuals[i]);
+  return { history: observed.slice(n - 120, n), actual, regressionForecast, arForecast, rho, acfBefore: lagCorrelation(residuals, 1), acfAfter: lagCorrelation(corrected, 1), maeBefore: mae(regressionForecast), maeAfter: mae(arForecast) };
+}
+
 export function intervalCoverage(level: number, scale: number) {
   if (level <= 0 || level >= 100 || scale <= 0) throw new Error("Invalid interval parameters.");
   let lo = -8, hi = 8;

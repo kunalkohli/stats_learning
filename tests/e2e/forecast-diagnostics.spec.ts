@@ -103,12 +103,49 @@ test("hierarchy, driver uncertainty, and interval coverage demonstrate their fai
   expect(await page.locator('.coverage-dot[data-inside="false"]').count()).toBeGreaterThan(outside);
 });
 
+test("Holt–Winters stages, Fourier waves, and DHR structure respond honestly", async ({ page }) => {
+  const stat = (label: string) => page.locator(".lab-stats > div").filter({ hasText: label }).locator("strong");
+  const numeric = async (label: string) => Number((await stat(label).innerText()).replace(/[$,%]/g, ""));
+  await ready(page, "holt-winters");
+  const seasonalMae = await numeric("Holdout MAE");
+  await expect(stat("Seasonal swing")).not.toHaveText("$0");
+  await page.getByRole("button", { name: "1 · Level", exact: true }).click();
+  expect(await numeric("Holdout MAE")).toBeGreaterThan(seasonalMae);
+  await expect(stat("Seasonal swing")).toHaveText("$0");
+  await page.getByRole("button", { name: "3 · + season", exact: true }).click();
+  await page.getByRole("button", { name: "Multiplicative · percent of level", exact: true }).click();
+  await expect(stat("Seasonal swing")).toContainText("percentage points");
+  await expect(page.locator(".forecast-method")).toHaveCount(0);
+
+  await ready(page, "fourier");
+  await expect(page.locator(".fourier-panel")).toHaveCount(2);
+  const threeWaveRmse = await numeric("Fit RMSE vs known shape");
+  await page.getByRole("slider", { name: "Fourier pairs K", exact: true }).fill("1");
+  expect(await numeric("Fit RMSE vs known shape")).toBeGreaterThan(threeWaveRmse);
+  await page.getByRole("slider", { name: "Fourier pairs K", exact: true }).fill("3");
+  await page.getByRole("slider", { name: "Years of history", exact: true }).fill("1");
+  expect(await numeric("6-wave next-year RMSE")).toBeGreaterThan(await numeric("3-wave next-year RMSE"));
+  await expect(page.locator(".forecast-method")).toContainText("One year cannot separate");
+  await page.getByRole("slider", { name: "Years of history", exact: true }).fill("5");
+  expect(await numeric("6-wave next-year RMSE")).toBeLessThan(await numeric("3-wave next-year RMSE"));
+  await page.getByRole("button", { name: "3 waves", exact: true }).click();
+  await expect(page.locator(".chart-legend").filter({ hasText: "3-wave fit" })).toContainText("3-wave fit");
+
+  await ready(page, "dynamic-harmonic-regression");
+  const correctedMae = await numeric("Held-out MAE · selected"), regressionMae = await numeric("MAE · regression only");
+  expect(correctedMae).toBeLessThan(regressionMae);
+  expect(Number(await stat("Residual ACF at lag 1 · after AR correction").innerText())).toBeLessThan(.1);
+  await page.getByRole("button", { name: "Add AR(1) error correction", exact: true }).click();
+  expect(await numeric("Held-out MAE · selected")).toBe(regressionMae);
+  await expect(page.locator(".chart-legend").first()).not.toContainText("Fourier + AR(1) errors");
+});
+
 test("new labs fit mobile with 140% text and leave key controls reachable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await ready(page, "backtesting");
   await page.getByRole("button", { name: "Lab", exact: true }).click();
   for (let i = 0; i < 5; i++) await page.getByRole("button", { name: "Increase text size" }).click();
-  for (const slug of ["trend-or-seasonality", "baselines", "growth-rates", "backtesting", "error-metrics", "autocorrelation", "residuals", "hierarchical-forecasts", "drivers-leakage", "prediction-intervals"]) {
+  for (const slug of ["trend-or-seasonality", "baselines", "growth-rates", "backtesting", "error-metrics", "autocorrelation", "residuals", "hierarchical-forecasts", "drivers-leakage", "prediction-intervals", "holt-winters", "fourier", "dynamic-harmonic-regression"]) {
     await page.goto(`/forecasting/${slug}`);
     await page.getByRole("button", { name: "02 · Explore", exact: true }).click();
     await expect(page.locator(".lab")).toBeVisible();

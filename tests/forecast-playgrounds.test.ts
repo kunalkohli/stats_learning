@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MONTHLY_SALES, monthlyForecast, rollingBacktest, errorsByHorizon, baselineForecast, diagnosticSeries, difference, lagCorrelation, residualDiagnostics, chooseGrowth, growthScenarios, growthBacktest, metricsExperiment, hierarchyForecast, driverExperiment, intervalCoverage } from "../src/lib/forecast-playgrounds";
+import { MONTHLY_SALES, monthlyForecast, rollingBacktest, errorsByHorizon, baselineForecast, diagnosticSeries, difference, lagCorrelation, residualDiagnostics, chooseGrowth, growthScenarios, growthBacktest, metricsExperiment, hierarchyForecast, driverExperiment, intervalCoverage, fourierShape, fourierHistory, holtWinters, dhrExperiment } from "../src/lib/forecast-playgrounds";
 
 test("selecting longer history changes the fitted forecast without reading the future", () => {
   const short = monthlyForecast(MONTHLY_SALES.slice(32, 35), 7, 8);
@@ -78,6 +78,38 @@ test("driver uncertainty widens bands and explicitly leaky predictors can flatte
   assert.deepEqual(perfect.honest, perfect.leaky);
   assert.deepEqual(noisy.actual, perfect.actual);
   assert.ok(noisy.halfWidth > perfect.halfWidth); assert.ok(noisy.honestMae > noisy.leakyMae);
+});
+
+test("Fourier waves improve the known seasonal shape, while six waves overfit one year and settle with five", () => {
+  const one = fourierShape(3, 1), three = fourierShape(3, 3), four = fourierShape(3, 4);
+  assert.ok(three.rmse < one.rmse && three.r2 > .97);
+  assert.ok(four.rmse <= three.rmse);
+  const shortThree = fourierHistory(1, 3), shortSix = fourierHistory(1, 6);
+  assert.ok(shortThree.nextYearRmse < shortSix.nextYearRmse);
+  const longThree = fourierHistory(5, 3), longSix = fourierHistory(5, 6);
+  assert.ok(longSix.nextYearRmse < longThree.nextYearRmse);
+  assert.equal(fourierHistory(3, 3).observed.length, 156);
+  assert.throws(() => fourierHistory(0, 3));
+});
+
+test("Holt–Winters stages add level, trend and weekly states with different scaling modes", () => {
+  const level = holtWinters("additive", 1, .3), trend = holtWinters("additive", 2, .3), season = holtWinters("additive", 3, .3);
+  assert.ok(season.mae < trend.mae && trend.mae < level.mae);
+  assert.ok(season.amplitude > 1000 && trend.amplitude === 0);
+  assert.ok(season.trend > 80 && season.trend < 160);
+  const multiplicative = holtWinters("multiplicative", 3, .3);
+  assert.ok(multiplicative.amplitude > 10 && multiplicative.amplitude < 35);
+  assert.ok(multiplicative.forecast.every((v, i) => v > 0 && Number.isFinite(v)));
+  assert.throws(() => holtWinters("additive", 3, 1));
+});
+
+test("DHR's AR(1) error correction lowers held-out error and removes the residual lag-one echo", () => {
+  const result = dhrExperiment();
+  assert.equal(result.actual.length, 90);
+  assert.ok(result.rho > .7 && result.rho < .9);
+  assert.ok(result.acfBefore > .5 && Math.abs(result.acfAfter) < .1);
+  assert.ok(result.maeAfter < result.maeBefore);
+  assert.equal(result.regressionForecast.length, result.arForecast.length);
 });
 
 test("coverage counts are computed and respond monotonically to assumed interval width", () => {
