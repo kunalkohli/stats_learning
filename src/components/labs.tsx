@@ -7,9 +7,29 @@ import { blackFriday, generateSales, metrics, money, movingAverage } from "@/lib
 import type { Lesson } from "@/lib/curriculum";
 import { WorkflowLab } from "./workflow-lab";
 import { MstlLab, ModelComparisonLab } from "./seasonal-model-labs";
+import { HistoryForecastLab, RollingBacktestLab, AutocorrelationLab, ResidualNoiseLab, GrowthChoiceLab, ErrorMetricsLab, HierarchyReconciliationLab, DriverForecastLab, IntervalCoverageLab, FourierWavesLab, HoltWintersLab, DhrLab } from "./forecast-diagnostic-labs";
+import { baselineForecast, type BaselineMethod } from "@/lib/forecast-playgrounds";
 
 const ink = "#273d32", green = "#65845c", orange = "#c07a53", blue = "#728cae", purple = "#9a86ad";
 const dates = [{ at: 0, text: "Jan ’23" }, { at: 181, text: "Jul ’23" }, { at: 365, text: "Jan ’24" }, { at: 547, text: "Jul ’24" }, { at: 731, text: "Jan ’25" }, { at: 912, text: "Jul ’25" }, { at: 1095, text: "Dec ’25" }];
+const explainers: Partial<Record<Lesson["lab"], [string, string]>> = {
+  range: ["Northstar's central forecast is surrounded by illustrative ranges. Move the horizon or hide the bands; hiding uncertainty does not remove it.", "Why is a single point estimate not enough for a planning decision?"],
+  components: ["Change the ingredients of Northstar's simulated daily sales and compare the observed line with the supplied underlying components.", "Which changes persist, which repeat, and which are random or event-driven?"],
+  decomposition: ["Compare a real centered weekly average with the simulator's known components, then include or omit the known event adjustment.", "What structure can remain when a weekly smoother misses an annual event?"],
+  baseline: ["Each simple rule uses only Northstar's pre-origin history. Compare its forecast with the same 56 unseen days and compute genuine holdout errors.", "Does a more complex candidate earn its place against an honest baseline?"],
+  smoothing: ["Move alpha to change the weight given to Northstar's latest observation. The level update is computed recursively; additional supplied trend illustrations are labeled separately.", "How does a faster reaction trade off against following noise?"],
+  fourier: ["Combine repeating waves with supplied coefficients. The current diagram illustrates flexibility, rather than fitting a full DHR or Prophet model.", "What changes when a seasonal shape uses more harmonics?"],
+  events: ["Align Northstar's Black Friday sales by the event date or the ordinary calendar date and compare where the peaks land.", "Why can a fixed-date annual slot misalign a moving holiday?"],
+  families: ["Choose a model family to inspect which part of Northstar's forecasting problem its assumptions address.", "Which candidate is motivated by the pattern you need to explain?"],
+  ar: ["This stationary AR(1) illustration shows lag memory and a conditional mean after a shock. It is not an automatic ARIMA/SARIMA fit.", "How does positive or negative short-run memory affect a forecast?"],
+  stationary: ["Switch between Northstar's sales levels, daily changes, and same-weekday changes.", "Which transformation removes the changing level or repeating pattern, and what still remains?"],
+  base: ["Keep this year's Northstar sales fixed and change the prior-year comparison value.", "Is the growth headline describing new demand or an unusually weak base?"],
+  drivers: ["Inspect which candidate Northstar features were genuinely available before the forecast origin.", "Does this predictor cross the information boundary?"],
+  plan: ["Keep Northstar's baseline expectation and target distinct while changing a supplied promotion-lift scenario.", "What is a forecast, what is an ambition, and what action might close the gap?"],
+  workflow: ["Open one stage at a time and map a new Northstar forecasting problem to a decision, honest test, and targeted candidate.", "What evidence should determine the next step—not a mandatory complexity ladder?"],
+  mstl: ["Follow the separate, forecast, project, and recombine stages using known simulator components.", "What does the adjusted series contain, and how are the seasonal forecasts put back?"],
+  "model-comparison": ["Compare Prophet, DHR, and MSTL + ETS by mechanics, assumptions, and use case—not invented performance scores.", "Which trade-offs matter for Northstar's actual decision?"],
+};
 
 function Slider({ label, value, min, max, step = 1, onChange, suffix = "", prefix = "" }: { label: string; value: number; min: number; max: number; step?: number; onChange: (n: number) => void; suffix?: string; prefix?: string }) {
   return <label className="slider-control"><span>{label}<strong>{prefix}{value}{suffix}</strong></span><input aria-label={label} type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} /></label>;
@@ -22,34 +42,37 @@ function Stats({ items }: { items: [string, string][] }) { return <div className
 
 export function Lab({ lesson }: { lesson: Lesson }) {
   const titles: Record<Lesson["lab"], string> = { range: "The further ahead, the wider the range", components: "Build sales from the ingredients", history: "Zoom out. Does the story change?", decomposition: "What does a weekly smoother miss?", baseline: "Give a simple forecast a fair test", growth: "A little growth goes a long way", backtest: "Walk forward through time", metrics: "One big miss changes the score", acf: "Meet a series and its past self", residual: "Is there a pattern left over?", stationary: "Levels versus changes", base: "Change the base. Change the headline.", smoothing: "How quickly should a model react?", fourier: "Add waves, add flexibility", events: "Follow the event, not the date", families: "Choose the tool for the pattern", ar: "Autocorrelation → autoregression", hierarchy: "Do the forecasts add up?", drivers: "Would you know it at forecast time?", plan: "Forecast ≠ target ≠ plan", workflow: "Your roadmap for a new forecasting problem", mstl: "Remove, forecast, project, recombine", "model-comparison": "Prophet vs DHR vs MSTL + ETS" };
+  const title = lesson.slug === "holt-winters" ? "Add level, trend, and weekly states" : lesson.slug === "dynamic-harmonic-regression" ? "Waves for seasons. ARIMA for the rest." : titles[lesson.lab];
   const content = () => {
     switch (lesson.lab) {
-      case "range": return <RangeLab />;
-      case "components": return <ComponentsLab />;
-      case "history": return <HistoryLab />;
+      case "range": return lesson.slug === "prediction-intervals" ? <IntervalCoverageLab /> : <RangeLab />;
+      case "components": return lesson.slug === "holt-winters" ? <HoltWintersLab /> : <ComponentsLab />;
+      case "history": return <HistoryForecastLab />;
       case "decomposition": return <DecompositionLab />;
       case "baseline": return <BaselineLab />;
-      case "growth": return <GrowthLab />;
-      case "backtest": return <BacktestLab />;
-      case "metrics": return <MetricsLab />;
-      case "acf": return <ArLab acfOnly />;
+      case "growth": return <GrowthChoiceLab />;
+      case "backtest": return <RollingBacktestLab />;
+      case "metrics": return <ErrorMetricsLab />;
+      case "acf": return <AutocorrelationLab />;
       case "ar": return <ArLab />;
-      case "residual": return <ResidualLab />;
+      case "residual": return <ResidualNoiseLab />;
       case "stationary": return <StationaryLab />;
       case "base": return <BaseLab />;
       case "smoothing": return <SmoothingLab id={lesson.id} />;
-      case "fourier": return <FourierLab />;
+      case "fourier": return lesson.slug === "dynamic-harmonic-regression" ? <DhrLab /> : <FourierWavesLab />;
       case "events": return <EventLab />;
       case "families": return <FamiliesLab />;
-      case "hierarchy": return <HierarchyLab />;
-      case "drivers": return <DriversLab />;
+      case "hierarchy": return <HierarchyReconciliationLab />;
+      case "drivers": return lesson.slug === "drivers-leakage" ? <DriverForecastLab /> : <DriversLab />;
       case "plan": return <PlanLab />;
       case "workflow": return <WorkflowLab />;
       case "mstl": return <MstlLab />;
       case "model-comparison": return <ModelComparisonLab />;
     }
   };
-  return <section className="lab"><div className="lab-heading"><span className="figure-label">{lesson.lab === "model-comparison" ? "TABLE" : "FIG"} {String(lesson.id).padStart(2, "0")}.1</span><h3>{titles[lesson.lab]}</h3><span className="live-indicator"><i /> PLAYGROUND</span></div>{content()}<div className="simulation-label">{lesson.lab === "workflow" || lesson.lab === "model-comparison" ? "Decision guide · validate every candidate on your own use case" : "Simulated teaching example · not a fitted production model"}</div></section>;
+  const specificNotes = ["history", "growth", "backtest", "metrics", "acf", "residual", "hierarchy"].includes(lesson.lab) || ["prediction-intervals", "drivers-leakage", "holt-winters", "fourier", "dynamic-harmonic-regression"].includes(lesson.slug);
+  const explanation = !specificNotes && explainers[lesson.lab];
+  return <section className="lab"><div className="lab-heading"><span className="figure-label">{lesson.lab === "model-comparison" ? "TABLE" : "FIG"} {String(lesson.id).padStart(2, "0")}.1</span><h3>{title}</h3></div>{explanation && <div className="lab-explanation"><span className="micro">WHAT THIS SHOWS</span><p>{explanation[0]}</p><p><strong>The question it answers:</strong> {explanation[1]}</p></div>}{content()}{!specificNotes && <details className="lab-fine-print"><summary>Fine print & assumptions</summary><p>{lesson.lab === "workflow" || lesson.lab === "model-comparison" ? "Decision guide: validate each candidate on the actual business decision and future-data tests." : "Constructed teaching data and illustrative calculations, not a production forecasting service. Read the diagram's method notes and distinguish supplied simulator components from fitted estimates."}</p></details>}</section>;
 }
 
 function RangeLab() {
@@ -102,18 +125,13 @@ function DecompositionLab() {
 }
 
 function BaselineLab() {
-  const [method, setMethod] = useState("weekly");
+  const [method, setMethod] = useState<BaselineMethod>("weekly");
   const data = useMemo(() => generateSales(), []), cut = 1000, count = 56;
   const actual = data.slice(cut - 56, cut + count).map(d => d.sales);
-  const forecast = Array.from({ length: 112 }, (_, j) => {
-    if (j < 55) return null;
-    const i = cut - 56 + j;
-    if (method === "naive") return data[cut - 1].sales;
-    if (method === "weekly") return data[cut - 7 + ((i - cut + 7) % 7)].sales;
-    return data[i - 364].sales * (method === "growth" ? 1.18 : 1);
-  });
+  const predicted = baselineForecast(data.slice(0, cut).map(d => d.sales), count, method);
+  const forecast = [...Array(55).fill(null), data[cut - 1].sales, ...predicted];
   const score = metrics(actual.slice(56), forecast.slice(56) as number[]);
-  return <><Segments label="Baseline method" value={method} onChange={setMethod} values={[{ value: "naive", label: "Last value" }, { value: "weekly", label: "Last week" }, { value: "yearly", label: "364-day lag" }, { value: "growth", label: "364-day lag × 1.18" }]} />
+  return <><Segments<BaselineMethod> label="Baseline method" value={method} onChange={setMethod} values={[{ value: "mean", label: "Mean" }, { value: "naive", label: "Last value" }, { value: "weekly", label: "Last week" }, { value: "yearly", label: "364-day lag" }, { value: "drift", label: "Drift" }, { value: "growth", label: "364-day lag × 1.18" }]} />
     <Chart series={[{ name: "Actual sales", values: actual, color: ink }, { name: "Baseline forecast", values: forecast, color: orange, dashed: true }]} marker={{ at: 55, text: "Training ends" }} labels={[{ at: 0, text: "History" }, { at: 55, text: "Forecast origin" }, { at: 111, text: "+56 days" }]} />
     <Stats items={[["Holdout MAE", money(score.mae)], ["Holdout RMSE", money(score.rmse)]]} /><Hint>All baseline inputs come from before the forecast origin. The 18% growth factor is a supplied scenario assumption, not learned from holdout sales. This window illustrates ordinary-day performance; test event windows separately.</Hint></>;
 }
@@ -186,12 +204,6 @@ function SmoothingLab({ id }: { id: number }) {
   const slope = id === 14 ? 150 : 0;
   const forecast = Array.from({ length: 90 }, (_, i) => i < 69 ? null : smooth[69] + (damping ? slope * (1 - 0.85 ** (i - 69)) / (1 - 0.85) * 0.85 : slope * (i - 69)));
   return <><div className="lab-controls"><Slider label="Level smoothing α" value={alpha} min={0.05} max={1} step={0.05} onChange={n => setAlpha(Number(n.toFixed(2)))} />{id === 14 && <button className={`toggle ${damping ? "on" : ""}`} aria-pressed={damping} onClick={() => setDamping(!damping)}><span />Damp illustrative trend</button>}</div><Chart series={[{ name: "Observed sales", values: [...values, ...Array(20).fill(null)], color: "#bdc7b8" }, { name: "Smoothed level", values: [...smooth, ...Array(20).fill(null)], color: green }, { name: "Illustrative forecast", values: forecast, color: orange, dashed: true }]} marker={{ at: 69, text: "Today" }} labels={[{ at: 0, text: "History" }, { at: 35, text: "Level shift" }, { at: 89, text: "+20 days" }]} /><Hint>Higher α follows the level shift faster but also follows noise. {id === 14 ? "The future trend here is a supplied $150/day illustration, not an estimated Holt trend; toggle damping to compare extrapolation shapes." : "This playground computes SES level updates, not a full seasonal ETS fit. SES point forecasts are flat beyond the last observation."}</Hint></>;
-}
-
-function FourierLab() {
-  const [k, setK] = useState(2);
-  const values = Array.from({ length: 366 }, (_, t) => Array.from({ length: k }, (_, i) => 4500 / (i + 1) * Math.cos((i + 1) * 2 * Math.PI * (t - 330) / 365)).reduce((a, b) => a + b, 0));
-  return <><Slider label="Fourier pairs K" value={k} min={1} max={10} onChange={setK} /><Chart series={[{ name: `${k} combined harmonic${k === 1 ? "" : "s"}`, values, color: purple }]} labels={[{ at: 0, text: "Jan" }, { at: 90, text: "Apr" }, { at: 181, text: "Jul" }, { at: 273, text: "Oct" }, { at: 365, text: "Jan" }]} /><Hint>These supplied coefficients show how higher harmonics make a sharper repeating shape. They are not fitted to sales. A moving Black Friday event still deserves a date-aware feature.</Hint></>;
 }
 
 function EventLab() {

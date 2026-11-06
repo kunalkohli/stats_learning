@@ -1,6 +1,6 @@
 # DSConcepts — agent onboarding context
 
-Last updated: **2026-11-02**.
+Last updated: **2026-11-05**.
 
 This is the local handoff document for the education/learning project. Read it before continuing development, then inspect the current source rather than treating this document as a replacement for it.
 
@@ -18,7 +18,18 @@ Read the project's `AGENTS.md` before editing. Next.js generates an instruction 
 
 **DSConcepts** (formerly StatsConcepts) is a local-first educational app for learning data-science concepts and practicing interview skills. Forecasting (31 stops), experimentation (24 stops), and SQL Practice (24 problems) are implemented. Regression and probability/distributions remain **planned**.
 
-### Latest follow-up in PR #3: emoji tables and Northstar use cases
+### Latest: focused Learn cards and forecast diagnostics (PR #4)
+
+- Work is on `feat/focused-cards-forecast-labs`, branched from updated `origin/main` after PR #3 merged. **Draft PR #4:** <https://github.com/kunalkohli/stats_learning/pull/4>. Leave it unmerged and undeployed unless the user explicitly asks.
+- Lab Learn is now a **same-page stack of short cards**, not a paginated deck. Cards carry one or two ideas and use **The big idea / Why it matters / How it works / Remember this** sections. “Take it with you” was replaced by “Remember this” in both layouts. The stack-based reading refactor supersedes the grouped 2–3-idea pages described below.
+- `src/lib/reading-pages.ts` groups ideas in pairs (plus setup/takeaway), `src/components/focus-lesson.tsx` renders the stack, and `src/components/lesson-teaching.tsx` supplies tables, the baseline comparison, and the highlighted Remember card. The components lesson keeps all four concepts in one comparison table; the baselines lesson compares five simple rules. Existing lesson IDs, storage keys, notes, quizzes, and progress behavior are unchanged.
+- `src/lib/forecast-playgrounds.ts` contains reproducible teaching algorithms: monthly log-trend/month fits, rolling refits, baseline forecasts, lag diagnostics, residual models, growth/error experiments, hierarchy projection, driver leakage, interval coverage, Fourier OLS fits, staged Holt–Winters recursions, and a DHR-style Fourier + AR(1) correction.
+- `src/components/forecast-diagnostic-labs.tsx` renders the lesson-specific labs: history-window fitting, animated rolling backtest, lag scatter + ACF, biased residual diagnostics, growth-rate selection, six error metrics, hierarchy reconciliation, driver leakage, interval coverage, staged Holt–Winters (additive/multiplicative), Fourier wave fitting and overfitting with one versus five years, and DHR residual correction.
+- The Holt–Winters lab implements actual recursions with fixed stage parameters; the Fourier lab fits OLS waves and scores next-year error against a known shape; the DHR lab estimates three Fourier pairs and one AR(1) coefficient on training data. They are deliberately small teaching implementations—not tuned ETS/ARIMA/DHR production models. Each lab's fine print states what is computed, supplied, or illustrative.
+- Tests: `tests/forecast-playgrounds.test.ts` covers training boundaries, refits, metrics, hierarchy, leakage, coverage, Fourier overfitting, Holt–Winters stages, and DHR correction. `tests/e2e/forecast-diagnostics.spec.ts` covers controls, animation, reduced motion, held-out scores, and mobile 140% fit. Reading/teaching regressions were updated for the same-page cards.
+- Final local verification: **39 unit tests, all 45 browser tests against a fresh production server, typecheck, and production build (87 pages) passed**. Desktop and 390px/140% visuals of the new labs were inspected. No hosted CI run, merge, or production deployment is implied.
+
+### Earlier follow-up in PR #3: emoji tables and Northstar use cases
 
 - The user explicitly requested these additions be pushed to **the existing PR #3**, on `feat/grouped-learning-cards`; do not create a separate PR for them or merge/deploy automatically.
 - Replace the main explanatory lesson bullets in **Classic** with semantic tables: concept/component, definition, and a concrete Northstar example, using an emoji per row. This covers all 31 forecasting and 24 experimentation lessons. The forecasting overview's explanatory list is also a table. Navigation, quizzes, and the interactive workflow/mission steps are not converted to tables.

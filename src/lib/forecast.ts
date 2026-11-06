@@ -38,4 +38,4 @@ export function metrics(actual: number[], predicted: number[]) {
   return { mae: errors.reduce((s, e) => s + Math.abs(e), 0) / errors.length, rmse: Math.sqrt(errors.reduce((s, e) => s + e * e, 0) / errors.length), bias: errors.reduce((s, e) => s + e, 0) / errors.length };
 }
 
-export const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format(value);
+export const money = (value: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", minimumFractionDigits: 0, maximumFractionDigits: 1 }).format(value);

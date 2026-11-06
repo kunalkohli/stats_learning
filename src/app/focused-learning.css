@@ -1,0 +1,50 @@
+.learning-cards { width: 100%; max-width: 1400px; }
+.learning-cards-intro { display: flex; flex-wrap: wrap; gap: 9px 14px; align-items: center; margin: 0 0 18px; }
+.learning-cards-intro>span { font-size: .6875rem; font-weight: 900; color: white; background: #7151b1; padding: 5px 10px; border: 1px solid var(--ink); border-radius: 20px; }
+.learning-cards-intro>p { font-size: .8125rem; color: var(--muted); }
+.learning-card { border: 2px solid var(--ink); border-radius: 17px; box-shadow: 3px 4px 0 var(--ink); padding: 23px; background: var(--panel); margin-bottom: 18px; min-width: 0; }
+.learning-card-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 17px; }
+.learning-card-number { display: grid; place-items: center; width: 25px; height: 25px; border: 2px solid var(--ink); border-radius: 50%; flex-shrink: 0; color: #fff; background: #7151b1; font-size: .75rem; font-weight: 900; }
+.learning-card-icon,.remember-icon { display: inline-grid; place-items: center; width: 39px; height: 39px; border: 2px solid var(--ink); border-radius: 11px; background: #e9cb78; font-size: 1.25rem; flex-shrink: 0; }
+.learning-card-heading>h2 { font-size: 1.5rem; font-weight: 900; line-height: 1.3; margin: 0; }
+.learning-card-lead { font-size: 1rem; line-height: 1.8; max-width: 100ch; margin-bottom: 17px; }
+.learning-card-lead:last-child { margin-bottom: 0; }
+.learning-card .lesson-table { border-collapse: separate; border-spacing: 0; border: 2px solid var(--ink); border-radius: 13px; overflow: hidden; }
+.learning-card .lesson-table th,.learning-card .lesson-table td { border: 0; border-bottom: 1px solid #c6c3b3; padding: 13px 16px; }
+.learning-card .lesson-table thead th { background: #eddb94; color: var(--ink); font-size: .75rem; }
+.learning-card .lesson-table tbody th { background: #e9e6d84d; font-weight: 900; }
+.learning-card .lesson-table tbody tr:last-child th,.learning-card .lesson-table tbody tr:last-child td { border-bottom: 0; }
+.learning-card .lesson-example-cell { background: #ece9dd55; }
+.baseline-comparison thead th:first-child { width: 21%; }
+.big-idea-definition { background: #e6e8ed; padding: 15px 17px; border-radius: 10px; margin: 16px 0; font-size: .9375rem; line-height: 1.8; }
+.big-idea-definition dt,.learning-how dt { font-weight: 900; }.big-idea-definition dd,.learning-how dd { margin: 4px 0 0; }
+.learning-how { margin: 0; font-size: 1rem; line-height: 1.8; }.learning-how>div+div { margin-top: 17px; }
+.remember-this { margin: 23px 0; }.remember-this>h2 { display: flex; align-items: center; gap: 10px; font-size: 1.25rem; font-weight: 900; margin-bottom: 13px; }
+.remember-message { background: #efcc69; border: 2px solid var(--ink); border-radius: 14px; padding: 20px; font-size: 1.125rem; line-height: 1.7; font-weight: 800; }
+.learning-remember .remember-this { margin: 0; }.learning-remember .learning-card-number { background: #e9cb78; color: var(--ink); }
+.learning-next-note { margin: 17px 0; font-size: .875rem; color: var(--muted); }.learning-remember>.button { font-size: .875rem; float: none; }
+.lab-explanation { border: 1px solid var(--ink); border-radius: 12px; background: #e5e5ed; padding: 16px; margin: 5px 0 17px; }
+.lab-explanation>.micro { font-size: .625rem; border: 1px solid var(--line); border-radius: 20px; display: inline-block; padding: 3px 8px; background: var(--panel); }
+.lab-explanation>p { font-size: .875rem; line-height: 1.75; margin-top: 9px; }.lab-explanation strong { font-weight: 900; color: #64449b; }
+.lab-fine-print { margin: 18px 0 0; padding: 14px 0; border-top: 1px solid var(--line); font-size: .75rem; line-height: 1.8; color: var(--muted); }.lab-fine-print>summary { cursor: pointer; }.lab-fine-print>p { margin-top: 12px; }
+.lab .segments { flex-wrap: wrap; }.lab-controls>.segment-control { min-width: 0; max-width: 100%; }.lab .hierarchy-children { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }.lab .hierarchy-children>div { min-width: 0; }.lab .hierarchy strong { font-size: 1.25rem; }
+.forecast-method { font-size: .8125rem; line-height: 1.75; margin: 14px 0; padding: 10px 12px; background: #e5e9da; border-radius: 7px; }
+.forecast-diagnostics { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 18px; margin-top: 20px; }.forecast-diagnostics>div { min-width: 0; }
+.diagnostic-caption { font-size: .6875rem; line-height: 1.7; font-weight: 800; letter-spacing: .025em; text-transform: uppercase; margin: 15px 0 8px; }
+.diagnostic-svg,.forecast-error-bars,.growth-choice-chart { width: 100%; display: block; height: auto; }
+.coverage-chart { width: 100%; height: auto; display: block; margin-top: 20px; }.coverage-chart text { font: 11px var(--sans); fill: var(--muted); }
+.fourier-panel { margin-top: 22px; padding-top: 4px; border-top: 1px solid var(--line); }.fourier-panel:first-of-type { border-top: 0; }.fourier-panel .diagnostic-caption { margin-top: 14px; }.holt-notes { display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 12px 16px; border-left: 2px solid var(--green); background: #eef1e5; }.holt-notes p { font-size: .875rem; line-height: 1.75; margin: 0; }
+.weekday-bars { width: 100%; height: auto; display: block; }.weekday-bars text { font: 11px var(--sans); fill: var(--muted); }
+.hierarchy-gap { text-align: center; font-size: .9375rem; line-height: 1.8; color: #a54538; margin: 20px 0; }.hierarchy-gap.coherent { color: #3b6c48; }.lab-leak-warning { padding: 12px; border: 1px solid #ad5a42; background: #f0dfc4; font-size: .875rem; line-height: 1.7; margin: 15px 0; }
+.diagnostic-svg text,.forecast-error-bars text,.growth-choice-chart text { font: 11px var(--sans); fill: var(--muted); }
+.diagnostic-svg [role="button"] { cursor: pointer; }.diagnostic-svg [role="button"]:focus-visible { outline: 2px solid var(--ink); }
+.forecast-error-bars { margin-top: 12px; }
+.compact-lab-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .8125rem; line-height: 1.7; margin: 15px 0; }.compact-lab-table th,.compact-lab-table td { padding: 10px; border: 1px solid var(--line); text-align: left; overflow-wrap: anywhere; }.compact-lab-table thead th { background: #ead68b; }.compact-lab-table .active { background: #dce8ce; }
+@media (max-width:1000px) { .forecast-diagnostics { grid-template-columns: minmax(0,1fr); }.diagnostic-svg { max-width: 650px; margin: auto; } }
+@media (max-width:760px) {
+  .lab .hierarchy-children { grid-template-columns: minmax(0,1fr); }.lab .hierarchy-children:before { display: none; }.lab .segments button { border-bottom: 1px solid var(--line); }
+  .learning-card { padding: 18px; }.learning-card-heading { gap: 8px; }.learning-card-heading>h2 { font-size: 1.3rem; }.learning-card-icon { width: 32px; height: 32px; font-size: 1.125rem; }.learning-card-number { width: 23px; height: 23px; }.learning-card-lead,.learning-how { font-size: .9375rem; }.learning-cards-intro>p { font-size: .8125rem; }
+  .learning-card .lesson-table { border: 0; border-radius: 0; }.learning-card .lesson-table tbody tr { border: 1px solid var(--line); }.learning-card .lesson-table tbody th { background: #ead68b; }.learning-card .lesson-table tbody td { border-top: 1px solid #c6c3b3; }.learning-card .lesson-table tbody tr:last-child th { border-bottom: 0; }
+  .remember-message { padding: 17px; font-size: 1.0625rem; }.lab-explanation { padding: 13px; }.lab-explanation>p { font-size: .875rem; }.diagnostic-caption { font-size: .75rem; }.forecast-diagnostics { gap: 4px; }.compact-lab-table { font-size: .75rem; }.compact-lab-table th,.compact-lab-table td { padding: 8px 6px; }
+}
+@media (prefers-reduced-motion:reduce) { .forecast-error-bars rect { transition: none; } }
