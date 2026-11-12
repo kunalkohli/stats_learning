@@ -23,6 +23,27 @@ test("home, journey map, and all 31 lessons render without client errors", async
   expect(errors).toEqual([]);
 });
 
+test("LLMs & AI is clearly a non-interactive work-in-progress journey", async ({ page }) => {
+  await page.goto("/");
+  const card = page.getByRole("article").filter({ has: page.getByRole("heading", { name: "LLMs & AI", exact: true }) });
+  for (const layout of ["Classic", "Lab"]) {
+    await page.getByRole("button", { name: layout, exact: true }).click();
+    await expect(card).toBeVisible();
+    await expect(card).toContainText("WORK IN PROGRESS");
+    await expect(card).toContainText("transformers");
+    await expect(card).toContainText("How to use AI models");
+    await expect(card).toContainText("not available yet");
+    await expect(card.locator("a, button")).toHaveCount(0);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (let i = 0; i < 5; i++) await page.getByRole("button", { name: "Increase text size" }).click();
+  for (const layout of ["Classic", "Lab"]) {
+    await page.getByRole("button", { name: layout, exact: true }).click();
+    await expect(card).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
 test("range controls, quiz feedback, and diagram reset work", async ({ page }) => {
   await page.goto("/forecasting/forecast-is-a-range");
   await expect(page.getByRole("button", { name: "Mark as understood", exact: true })).toBeEnabled();
