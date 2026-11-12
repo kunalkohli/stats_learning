@@ -15,6 +15,7 @@ import { ExperimentJournal } from "./experimentation";
 import { getLessonTeaching, type TeachingTableData } from "@/lib/lesson-teaching";
 import { LessonConceptTables, LessonCase, TeachingTable, RememberThis } from "./lesson-teaching";
 import { forecastGuide } from "@/lib/journey-guides";
+import { LessonCopy } from "./lesson-copy";
 export { Home } from "./home";
 
 export const lessonUrl = (lesson: Lesson) => `/forecasting/${lesson.slug}`;
@@ -118,7 +119,7 @@ export function Forecasting({ lesson }: { lesson?: Lesson }) {
       {!lesson ? <ForecastIntro progress={progress} /> : <article className="reference-lesson" style={{ "--part-color": parts[lesson.part].color } as React.CSSProperties}>
         {layout !== "lab" && title}
         {layout === "lab" ? <FocusLesson title={title} idea={lesson} teaching={teaching} guide={forecastGuide(lesson.lab, lesson.slug)} lab={<Lab key={labKey} lesson={lesson} />} check={quiz} notebook={notebook} reading={reading} next={nextLink} reset={<ResetLabButton onClick={() => setLabKey(k => k + 1)} />} /> : <div className="lesson-content-panel">
-          <p className="lesson-intro">{lesson.intro}</p>
+          <LessonCopy className="lesson-intro" text={lesson.intro} />
           {teaching?.caseStudy && <LessonCase study={teaching.caseStudy} />}
           <LessonConceptTables teaching={teaching!} />
           {lesson.formula && <div className="formula">{lesson.formula}</div>}

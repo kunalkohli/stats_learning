@@ -1,6 +1,6 @@
 # DSConcepts — agent onboarding context
 
-Last updated: **2026-11-05**.
+Last updated: **2026-11-11**.
 
 This is the local handoff document for the education/learning project. Read it before continuing development, then inspect the current source rather than treating this document as a replacement for it.
 
@@ -18,7 +18,15 @@ Read the project's `AGENTS.md` before editing. Next.js generates an instruction 
 
 **DSConcepts** (formerly StatsConcepts) is a local-first educational app for learning data-science concepts and practicing interview skills. Forecasting (31 stops), experimentation (24 stops), and SQL Practice (24 problems) are implemented. Regression and probability/distributions remain **planned**.
 
-### Latest: focused Learn cards and forecast diagnostics (PR #4)
+### Latest: scannable lesson copy and planning-card width
+
+- PR #4 was merged and manually deployed at `744a280`; PR #5 (the LLMs & AI WIP homepage placeholder) was subsequently merged at `b0727a9`. No LLM lessons or model integrations are implemented.
+- New work is on `feat/scannable-lesson-bullets`, based on merged PR #5. The user asked for a new PR addressing dense text and early wrapping above the Northstar planning table. Leave this follow-up unmerged and undeployed.
+- `src/components/lesson-copy.tsx` renders multi-sentence lesson text as semantic lists, retaining single-sentence prose. `src/lib/lesson-copy.ts` uses English sentence segmentation, not a split on periods, preserving decimals, formulas, punctuation, whitespace, and sentence order. Used in both lesson layouts, definitions, Why/How sections, teaching-table examples, and case-study copy across the 55 lessons. Source curriculum, formulas, takeaways, IDs, and storage keys are unchanged.
+- Removed the planning description's `85ch` cap and the Learn lead's `100ch` cap. Copy uses its card's available width and still wraps naturally on smaller screens.
+- Verification: **41 unit tests, all 48 browser tests against a fresh production build, typecheck, and build (87 pages) passed**. Browser regressions check all 55 introductions in both layouts, full-width planning copy, retained case-study caveats, and mobile 140% fit. Desktop/mobile first-card visuals were inspected. No merge or deployment of this follow-up has occurred.
+
+### Earlier: focused Learn cards and forecast diagnostics (PR #4)
 
 - Work is on `feat/focused-cards-forecast-labs`, branched from updated `origin/main` after PR #3 merged. **Draft PR #4:** <https://github.com/kunalkohli/stats_learning/pull/4>. Leave it unmerged and undeployed unless the user explicitly asks.
 - Lab Learn is now a **same-page stack of short cards**, not a paginated deck. Cards carry one or two ideas and use **The big idea / Why it matters / How it works / Remember this** sections. “Take it with you” was replaced by “Remember this” in both layouts. The stack-based reading refactor supersedes the grouped 2–3-idea pages described below.

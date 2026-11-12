@@ -1,3 +1,7 @@
+.lesson-copy { margin: 0; }
+ul.lesson-bullets { list-style: disc; padding-inline-start: 1.25em; }
+.lesson-bullets>li { padding-inline-start: .15em; }
+.lesson-bullets>li+li { margin-top: .45em; }
 .lesson-concept-tables { margin: 22px 0; }
 .lesson-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .875rem; line-height: 1.75; }
 .lesson-table th,.lesson-table td { border: 1px solid var(--line); text-align: left; vertical-align: top; padding: 16px; overflow-wrap: anywhere; }
@@ -10,7 +14,7 @@
 .lesson-secondary-table { margin-top: 28px; }.lesson-secondary-table h2 { font-size: 1.125rem; line-height: 1.4; margin-bottom: 13px; }
 .lesson-case-study { margin: 24px 0; padding: 21px; border: 1px solid var(--line); border-radius: 7px; background: #e8edda; }
 .lesson-case-study h2 { font-size: 1.25rem; line-height: 1.4; margin: 0 0 12px; }
-.lesson-case-study>p { font-size: .9375rem; line-height: 1.8; margin-bottom: 18px; max-width: 85ch; }
+.lesson-case-intro { font-size: .9375rem; line-height: 1.8; margin-bottom: 18px; }
 .lesson-case-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .875rem; line-height: 1.8; background: var(--panel); }
 .lesson-case-label-column { width: 25%; }
 .lesson-case-table th,.lesson-case-table td { padding: 13px 15px; border: 1px solid #aab395; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
@@ -35,7 +39,7 @@
   .lesson-table tbody th { background: var(--lime); font-size: 1rem; }
   .lesson-table tbody td { border-top: 1px solid #bbc1ab; }
   .lesson-table tbody td:before { content: attr(data-label); display: block; font: 700 .6875rem/1.6 var(--sans); color: var(--muted); margin-bottom: 6px; }
-  .lesson-case-study { padding: 16px; }.lesson-case-study>p { font-size: .9375rem; }
+  .lesson-case-study { padding: 16px; }
   .lesson-case-table,.lesson-case-table tbody,.lesson-case-table tr,.lesson-case-table th,.lesson-case-table td { display: block; width: 100%; }
   .lesson-case-table { border: 1px solid #aab395; }
   .lesson-case-table colgroup { display: none; }
