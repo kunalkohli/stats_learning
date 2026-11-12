@@ -47,6 +47,12 @@ export function Home() {
           <h3>SQL Practice</h3><p>Query Northstar’s orders, payments, and refunds. Start with aggregation and joins; advance to first-order cohorts, ranking, LEAD, LAG, and running totals. Write, run, and check real SQL.</p>
           <span className="sql-card-cta">12 basic + 12 advanced →</span>
         </Link>
+        <article className="journey-card planned">
+          <div className="card-meta"><span>COMING LATER</span><span>WORK IN PROGRESS</span></div>
+          <h3>LLMs &amp; AI</h3>
+          <p>How large language models work: tokens, embeddings, attention, transformers, and training. How to use AI models: prompting, choosing models, tools, retrieval, and evaluating outputs.</p>
+          <p>Curriculum in progress. Lessons and interactive labs are not available yet.</p>
+        </article>
         {[
           { name: "Regression", description: "Fitting lines, reading coefficients, confounders and what ‘controlling for’ really means." },
           { name: "Probability & distributions", description: "Randomness, the shapes it takes, and why averages behave so well." },
